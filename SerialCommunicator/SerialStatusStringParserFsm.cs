@@ -10,6 +10,12 @@ namespace SerialCommunicator
 		ReaderStatusFlag readerStatus = ReaderStatusFlag.Closed;
 		DataCollectionFlag collection = DataCollectionFlag.On;
 		ParserData parserData;
+
+		public SerialStatusStringParserFsm()
+		{
+			parserData = new ParserData();
+		}
+
 		public bool Update(char data, out SerialStatusUpdateEventArgs e)
 		{
 			updateReaderStatus(data);

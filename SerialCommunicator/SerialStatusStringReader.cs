@@ -13,6 +13,7 @@ namespace SerialCommunicator
 		public SerialStatusStringReader(SerialPort serialPort)
 		{
 			port = serialPort;
+			fsm = new SerialStatusStringParserFsm();
 		}
 
 		public void Update()
