@@ -17,7 +17,7 @@ namespace SerialCommunicator
 			}
 			public static SerialStatusData ParseStatusData(ParserData data)
 			{
-				int offset = data.fields[4] == string.Empty ? 1 : 0;
+				int offset = data.fields[data.fields.Length - 1] == string.Empty ? 1 : 0;
 				int date = Convert.ToByte(data.fields[1], 10);
 				int time = Convert.ToByte(data.fields[2], 10);
 
