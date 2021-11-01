@@ -38,8 +38,8 @@ namespace ELE301.SemesterProject.Kortleser.CLI
 					}
 
 					Console.Write("Select port (max {0}): ", ports.Length);
-					portIndex = Int32.Parse(Console.ReadLine());
-					if (portIndex > ports.Length || portIndex <= 0)
+					portIndex = Int32.Parse(Console.ReadLine()) - 1;
+					if (portIndex > ports.Length - 1 || portIndex < 0)
 						throw new Exception("Illegal value");
 
 					Log.Information("Continuing with port: {0}",ports[portIndex]);
@@ -47,7 +47,7 @@ namespace ELE301.SemesterProject.Kortleser.CLI
 				catch (Exception ex)
 				{
 					portIndex = 0;
-					Log.Error(ex, "Error: {0}\nContinuing with port number {1}", ex.Message, portIndex);
+					Log.Error(ex, "Continuing with port: {0}", ports[portIndex]);
 				}
 			}
 
