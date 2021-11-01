@@ -1,22 +1,36 @@
 ﻿using System;
 using System.IO.Ports;
+using System.Threading;
+using System.Threading.Tasks;
 using Serilog;
 
 namespace SerialCommunicator
 {
-	public class SerialStatusStringReader
+	public class SerialStatusStringReader : IDisposable
 	{
 		SerialStatusStringParserFsm fsm;
 		SerialPort port;
 		public event EventHandler<SerialStatusUpdateEventArgs> StatusRecieved;
-
+		Task updater;
+		CancellationTokenSource updateCanceler;
 		public SerialStatusStringReader(SerialPort serialPort)
 		{
 			port = serialPort;
 			fsm = new SerialStatusStringParserFsm();
+			updateCanceler = new CancellationTokenSource();
+			updater = Task.Run(() =>
+			{
+				for (; !updateCanceler.Token.IsCancellationRequested; )
+					this.Update();
+			},updateCanceler.Token);
 		}
 
-		public void Update()
+		~SerialStatusStringReader()
+		{
+			Dispose();
+		}
+
+		void Update()
 		{
 			try
 			{
@@ -38,6 +52,19 @@ namespace SerialCommunicator
 		{
 			EventHandler<SerialStatusUpdateEventArgs> handler = StatusRecieved;
 			handler?.Invoke(this, e);
+		}
+
+		public void Dispose()
+		{
+			try
+			{
+				updateCanceler?.Cancel();
+				updater?.Wait(100);
+				updater?.Dispose();
+				updateCanceler?.Dispose();
+			}
+			catch (Exception)
+			{ }
 		}
 	}
 }
