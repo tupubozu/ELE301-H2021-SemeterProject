@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SerialCommunicator
+namespace ELE301.SemesterProject.SerialCommunication
 {
 	public class SerialStatusUpdateEventArgs : EventArgs
 	{

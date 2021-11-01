@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Serilog;
 
-namespace SerialCommunicator
+namespace ELE301.SemesterProject.SerialCommunication
 {
 	public class SerialStatusStringReader : IDisposable
 	{
