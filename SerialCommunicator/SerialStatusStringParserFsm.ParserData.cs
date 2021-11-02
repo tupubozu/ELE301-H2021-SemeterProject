@@ -22,7 +22,7 @@ namespace ELE301.SemesterProject.SerialCommunication
 				int time = Convert.ToByte(data.fields[2], 10);
 
 				return new SerialStatusData(
-					init_UnitNumber: Convert.ToByte(data.fields[0], 10),
+					init_UnitNumber: Convert.ToUInt16(data.fields[0], 10),
 					init_Timestamp: new DateTime(
 						year: date / 10000,
 						month: (date % 10000) / 100,
@@ -32,11 +32,11 @@ namespace ELE301.SemesterProject.SerialCommunication
 						second: time % 100),
 					init_InputStatus: Convert.ToByte(data.fields[3], 2),
 					init_OutputStatus: offset == 1 ? Convert.ToByte(data.fields[4], 2) : (byte)0,
-					init_Thermistor: Convert.ToByte(data.fields[4 + offset], 10),
-					init_Analog1: Convert.ToByte(data.fields[5 + offset], 10),
-					init_Analog2: Convert.ToByte(data.fields[6 + offset], 10),
-					init_TemperatureIC1: Convert.ToByte(data.fields[7 + offset], 10),
-					init_TemperatureIC2: Convert.ToByte(data.fields[8 + offset], 10),
+					init_Thermistor: Convert.ToUInt16(data.fields[4 + offset], 10),
+					init_Analog1: Convert.ToUInt16(data.fields[5 + offset], 10),
+					init_Analog2: Convert.ToUInt16(data.fields[6 + offset], 10),
+					init_TemperatureIC1: Convert.ToUInt16(data.fields[7 + offset], 10),
+					init_TemperatureIC2: Convert.ToUInt16(data.fields[8 + offset], 10),
 					init_Source: offset == 1 ? SerialStatusData.DataSource.Simulation : SerialStatusData.DataSource.Physical
 					);
 
