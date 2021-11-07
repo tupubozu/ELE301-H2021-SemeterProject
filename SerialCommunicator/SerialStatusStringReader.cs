@@ -18,10 +18,10 @@ namespace ELE301.SemesterProject.SerialCommunication
 			port = serialPort;
 			fsm = new SerialStatusStringParserFsm();
 			updateCanceler = new CancellationTokenSource();
-			updater = Task.Run(() =>
+			updater = Task.Run( async () =>
 			{
 				for (; !updateCanceler.Token.IsCancellationRequested; )
-					this.Update();
+					await this.Update();
 			},updateCanceler.Token);
 		}
 
@@ -30,17 +30,22 @@ namespace ELE301.SemesterProject.SerialCommunication
 			Dispose();
 		}
 
-		void Update()
+		async Task Update()
 		{
 			try
 			{
-				while (port.BytesToRead != 0)
-				{
-					if (fsm.Update((char)port.ReadChar(), out SerialStatusUpdateEventArgs e))
+				if (port.BytesToRead != 0)
+					lock (port)
 					{
-						StatusRecieved?.Invoke(this, e);
+						while (port.BytesToRead != 0)
+						{
+							if (fsm.Update((char)port.ReadChar(), out SerialStatusUpdateEventArgs e))
+							{
+								StatusRecieved?.Invoke(this, e);
+							}
+						}
 					}
-				}
+				else await Task.Delay(5);
 			}
 			catch(Exception ex)
 			{

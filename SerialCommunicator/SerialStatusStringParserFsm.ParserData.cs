@@ -1,4 +1,5 @@
 ﻿using System;
+using ELE301.SemesterProject.Common.Core;
 
 namespace ELE301.SemesterProject.SerialCommunication
 {
