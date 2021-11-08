@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ELE301.SemesterProject.Common.Core
+namespace SemesterProject.Common.Core
 {
 	public class SerialStatusData
 	{

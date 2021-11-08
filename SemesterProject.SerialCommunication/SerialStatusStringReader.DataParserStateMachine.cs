@@ -1,4 +1,4 @@
-﻿namespace ELE301.SemesterProject.SerialCommunication
+﻿namespace SemesterProject.SerialCommunication
 {
 	public partial class SerialStatusStringReader
 	{

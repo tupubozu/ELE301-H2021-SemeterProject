@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SerialCommunicator\ELE301.SemesterProject.SerialCommunication.csproj" />
+    <ProjectReference Include="..\SemesterProject.SerialCommunication\SemesterProject.SerialCommunication.csproj" />
   </ItemGroup>
 
 </Project>

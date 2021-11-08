@@ -5,11 +5,11 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
-using ELE301.SemesterProject.Common.Core;
+using SemesterProject.Common.Core;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 
-namespace ELE301.SemesterProject.NetworkCommunication
+namespace SemesterProject.NetworkCommunication
 {
 	class SocketClientSession: IDisposable
 	{

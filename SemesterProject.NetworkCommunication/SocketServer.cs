@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Security.Cryptography;
 using Serilog;
 
-namespace ELE301.SemesterProject.NetworkCommunication
+namespace SemesterProject.NetworkCommunication
 {
 	public class SocketServer: IDisposable
 	{

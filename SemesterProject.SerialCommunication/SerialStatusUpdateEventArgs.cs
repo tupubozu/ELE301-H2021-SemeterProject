@@ -1,7 +1,7 @@
 ﻿using System;
-using ELE301.SemesterProject.Common.Core;
+using SemesterProject.Common.Core;
 
-namespace ELE301.SemesterProject.SerialCommunication
+namespace SemesterProject.SerialCommunication
 {
 	public class SerialStatusUpdateEventArgs : EventArgs
 	{

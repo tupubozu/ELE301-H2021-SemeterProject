@@ -1,5 +1,6 @@
 ﻿using System;
-using ELE301.SemesterProject.SerialCommunication;
+using SemesterProject.SerialCommunication;
+using SemesterProject.Common.Core;
 using Serilog;
 using System.IO.Ports;
 using System.Threading.Tasks;

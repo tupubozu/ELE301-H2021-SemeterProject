@@ -6,10 +6,11 @@
 
   <ItemGroup>
     <PackageReference Include="Serilog" Version="2.10.0" />
+    <PackageReference Include="System.IO.Ports" Version="5.0.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ELE301.SemesterProject.Common.Core\ELE301.SemesterProject.Common.Core.csproj" />
+    <ProjectReference Include="..\SemesterProject.Common.Core\SemesterProject.Common.Core.csproj" />
   </ItemGroup>
 
 </Project>
