@@ -3,7 +3,7 @@ using SemesterProject.Common.Core;
 
 namespace SemesterProject.SerialCommunication
 {
-	public partial class SerialStatusStringReader
+	public partial class SerialCommunicator
 	{
 		partial class DataParserStateMachine
 		{

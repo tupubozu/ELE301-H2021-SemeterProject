@@ -67,7 +67,7 @@ namespace ELE301.SemesterProject.Kortleser.CLI
 				}
 			}
 
-			using var dataReader = new SerialStatusStringReader(comPort);
+			using var dataReader = new SerialCommunicator(comPort);
 			dataReader.StatusRecieved += DataReader_StatusRecieved;
 
 			Console.CancelKeyPress += Console_CancelKeyPress;

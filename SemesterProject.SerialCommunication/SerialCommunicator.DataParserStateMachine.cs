@@ -1,13 +1,13 @@
 ﻿namespace SemesterProject.SerialCommunication
 {
-	public partial class SerialStatusStringReader
+	public partial class SerialCommunicator
 	{
 		partial class DataParserStateMachine
 		{
-			enum ReaderStatusFlag { FieldA, FieldB, FieldC, FieldD, FieldE, FieldF, FieldG, FieldH, FieldI, FieldJ, Closed, MsgBegin }
+			public enum StateFlag { FieldA, FieldB, FieldC, FieldD, FieldE, FieldF, FieldG, FieldH, FieldI, FieldJ, Closed, MsgBegin }
 			enum DataCollectionFlag { On, Off, Trigger }
 
-			ReaderStatusFlag readerStatus = ReaderStatusFlag.Closed;
+			public StateFlag CurrentState = StateFlag.Closed;
 			DataCollectionFlag collection = DataCollectionFlag.On;
 			ParserData parserData;
 
@@ -36,84 +36,84 @@
 				switch (data)
 				{
 					case '$':
-						if (readerStatus == ReaderStatusFlag.Closed)
+						if (CurrentState == StateFlag.Closed)
 						{
-							readerStatus = ReaderStatusFlag.MsgBegin;
+							CurrentState = StateFlag.MsgBegin;
 							collection = DataCollectionFlag.Off;
 						}
 						break;
 					case 'A':
-						if (readerStatus == ReaderStatusFlag.MsgBegin)
+						if (CurrentState == StateFlag.MsgBegin)
 						{
-							readerStatus = ReaderStatusFlag.FieldA;
+							CurrentState = StateFlag.FieldA;
 							collection = DataCollectionFlag.Off;
 						}
 						break;
 					case 'B':
-						if (readerStatus == ReaderStatusFlag.FieldA)
+						if (CurrentState == StateFlag.FieldA)
 						{
-							readerStatus = ReaderStatusFlag.FieldB;
+							CurrentState = StateFlag.FieldB;
 							collection = DataCollectionFlag.Off;
 						}
 						break;
 					case 'C':
-						if (readerStatus == ReaderStatusFlag.FieldB)
+						if (CurrentState == StateFlag.FieldB)
 						{
-							readerStatus = ReaderStatusFlag.FieldC;
+							CurrentState = StateFlag.FieldC;
 							collection = DataCollectionFlag.Off;
 						}
 						break;
 					case 'D':
-						if (readerStatus == ReaderStatusFlag.FieldC)
+						if (CurrentState == StateFlag.FieldC)
 						{
-							readerStatus = ReaderStatusFlag.FieldD;
+							CurrentState = StateFlag.FieldD;
 							collection = DataCollectionFlag.Off;
 						}
 						break;
 					case 'E':
-						if (readerStatus == ReaderStatusFlag.FieldD)
+						if (CurrentState == StateFlag.FieldD)
 						{
-							readerStatus = ReaderStatusFlag.FieldE;
+							CurrentState = StateFlag.FieldE;
 							collection = DataCollectionFlag.Off;
 						}
 						break;
 					case 'F':
-						if (readerStatus == ReaderStatusFlag.FieldE)
+						if (CurrentState == StateFlag.FieldE)
 						{
-							readerStatus = ReaderStatusFlag.FieldF;
+							CurrentState = StateFlag.FieldF;
 							collection = DataCollectionFlag.Off;
 						}
 						break;
 					case 'G':
-						if (readerStatus == ReaderStatusFlag.FieldF)
+						if (CurrentState == StateFlag.FieldF)
 						{
-							readerStatus = ReaderStatusFlag.FieldG;
+							CurrentState = StateFlag.FieldG;
 							collection = DataCollectionFlag.Off;
 						}
 						break;
 					case 'H':
-						if (readerStatus == ReaderStatusFlag.FieldG)
+						if (CurrentState == StateFlag.FieldG)
 						{
-							readerStatus = ReaderStatusFlag.FieldH;
+							CurrentState = StateFlag.FieldH;
 							collection = DataCollectionFlag.Off;
 						}
 						break;
 					case 'I':
-						if (readerStatus == ReaderStatusFlag.FieldH)
+						if (CurrentState == StateFlag.FieldH)
 						{
-							readerStatus = ReaderStatusFlag.FieldI;
+							CurrentState = StateFlag.FieldI;
 							collection = DataCollectionFlag.Off;
 						}
 						break;
 					case 'J':
-						if (readerStatus == ReaderStatusFlag.FieldI)
+						if (CurrentState == StateFlag.FieldI)
 						{
-							readerStatus = ReaderStatusFlag.FieldJ;
+							CurrentState = StateFlag.FieldJ;
 							collection = DataCollectionFlag.Off;
 						}
 						break;
 					case '#':
-						readerStatus = ReaderStatusFlag.Closed;
+						CurrentState = StateFlag.Closed;
 						collection = DataCollectionFlag.Trigger;
 						break;
 					default:
@@ -126,46 +126,46 @@
 				bool ctrl = false;
 				if (collection == DataCollectionFlag.On)
 				{
-					switch (readerStatus)
+					switch (CurrentState)
 					{
-						case ReaderStatusFlag.Closed:
+						case StateFlag.Closed:
 							parserData.Clear();
 							break;
-						case ReaderStatusFlag.FieldA:
+						case StateFlag.FieldA:
 							parserData.fields[0] += data;
 							break;
-						case ReaderStatusFlag.FieldB:
+						case StateFlag.FieldB:
 							parserData.fields[1] += data;
 							break;
-						case ReaderStatusFlag.FieldC:
+						case StateFlag.FieldC:
 							parserData.fields[2] += data;
 							break;
-						case ReaderStatusFlag.FieldD:
+						case StateFlag.FieldD:
 							parserData.fields[3] += data;
 							break;
-						case ReaderStatusFlag.FieldE:
+						case StateFlag.FieldE:
 							parserData.fields[4] += data;
 							break;
-						case ReaderStatusFlag.FieldF:
+						case StateFlag.FieldF:
 							parserData.fields[5] += data;
 							break;
-						case ReaderStatusFlag.FieldG:
+						case StateFlag.FieldG:
 							parserData.fields[6] += data;
 							break;
-						case ReaderStatusFlag.FieldH:
+						case StateFlag.FieldH:
 							parserData.fields[7] += data;
 							break;
-						case ReaderStatusFlag.FieldI:
+						case StateFlag.FieldI:
 							parserData.fields[8] += data;
 							break;
-						case ReaderStatusFlag.FieldJ:
+						case StateFlag.FieldJ:
 							parserData.fields[9] += data;
 							break;
 						default:
 							break;
 					}
 				}
-				else if (collection == DataCollectionFlag.Trigger && readerStatus == ReaderStatusFlag.Closed) ctrl = true;
+				else if (collection == DataCollectionFlag.Trigger && CurrentState == StateFlag.Closed) ctrl = true;
 
 				return ctrl;
 			}

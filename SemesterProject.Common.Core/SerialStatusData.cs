@@ -7,7 +7,7 @@ namespace SemesterProject.Common.Core
 		public enum DataSource { Physical, Simulation }
 
 		public DataSource Source {get; private set;}
-		public ushort UnitNumber { get; private set; }
+		public ushort NodeNumber { get; private set; }
 		public DateTime Timestamp { get; private set; }
 		public byte InputStatus { get; private set; }
 		public byte OutputStatus { get; private set; }
@@ -19,7 +19,7 @@ namespace SemesterProject.Common.Core
 
 		public SerialStatusData(ushort init_UnitNumber, DateTime init_Timestamp, byte init_InputStatus, byte init_OutputStatus, ushort init_Thermistor, ushort init_Analog1, ushort init_Analog2, ushort init_TemperatureIC1, ushort init_TemperatureIC2, DataSource init_Source)
 		{
-			UnitNumber = init_UnitNumber;
+			NodeNumber = init_UnitNumber;
 			Timestamp = init_Timestamp;
 			InputStatus = init_InputStatus;
 			OutputStatus = init_OutputStatus;

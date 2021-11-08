@@ -2,20 +2,23 @@
 using System.IO.Ports;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using Serilog;
 
 namespace SemesterProject.SerialCommunication
 {
-	public partial class SerialStatusStringReader : IDisposable
+	public partial class SerialCommunicator : IDisposable
 	{
+		Queue<SerialCommand> commandQueue;
 		DataParserStateMachine fsm;
 		SerialPort port;
 		public event EventHandler<SerialStatusUpdateEventArgs> StatusRecieved;
 		Task updater;
 		CancellationTokenSource updateCanceler;
 
-		public SerialStatusStringReader(SerialPort serialPort)
+		public SerialCommunicator(SerialPort serialPort)
 		{
+			commandQueue = new Queue<SerialCommand>();
 			port = serialPort;
 			fsm = new DataParserStateMachine();
 			updateCanceler = new CancellationTokenSource();
@@ -26,29 +29,35 @@ namespace SemesterProject.SerialCommunication
 			},updateCanceler.Token);
 		}
 
-		~SerialStatusStringReader()
+		~SerialCommunicator()
 		{
 			Dispose();
+		}
+
+		public void EnqueueCommand(SerialCommand command)
+		{
+			commandQueue.Enqueue(command);
 		}
 
 		async Task Update()
 		{
 			try
 			{
-				if (port.BytesToRead != 0)
-					lock (port)
+				while (port.BytesToRead != 0)
+				{
+					if (fsm.Update((char)port.ReadChar(), out SerialStatusUpdateEventArgs e))
 					{
-						while (port.BytesToRead != 0)
-						{
-							if (fsm.Update((char)port.ReadChar(), out SerialStatusUpdateEventArgs e))
-							{
-								StatusRecieved?.Invoke(this, e);
-							}
-						}
+						StatusRecieved?.Invoke(this, e);
 					}
+				}
+
+				if (fsm.CurrentState == DataParserStateMachine.StateFlag.Closed && commandQueue.Count > 0)
+				{
+					port.WriteLine(commandQueue.Dequeue().ToString());
+				}
 				else await Task.Delay(5);
 			}
-			catch(Exception ex)
+			catch (Exception ex)
 			{
 				Log.Error(ex, "Serial operations failed");
 			}
