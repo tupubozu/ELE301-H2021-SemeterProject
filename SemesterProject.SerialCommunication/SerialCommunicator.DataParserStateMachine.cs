@@ -1,4 +1,6 @@
-﻿namespace SemesterProject.SerialCommunication
+﻿using SemesterProject.Common.Core;
+
+namespace SemesterProject.SerialCommunication
 {
 	public partial class SerialCommunicator
 	{

@@ -1,7 +1,6 @@
 ﻿using System;
-using SemesterProject.Common.Core;
 
-namespace SemesterProject.SerialCommunication
+namespace SemesterProject.Common.Core
 {
 	public class SerialStatusUpdateEventArgs : EventArgs
 	{

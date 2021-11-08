@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Serilog;
+using SemesterProject.Common.Core;
 
 namespace SemesterProject.SerialCommunication
 {

@@ -5,7 +5,7 @@ using Serilog;
 using System.IO.Ports;
 using System.Threading.Tasks;
 
-namespace ELE301.SemesterProject.Kortleser.CLI
+namespace SemesterProject.Kortleser.CLI
 {
 	class Program
 	{
