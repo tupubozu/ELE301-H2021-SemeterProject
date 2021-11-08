@@ -43,7 +43,7 @@ namespace SemesterProject.Kortleser.CLI
 					if (portIndex > ports.Length - 1 || portIndex < 0)
 						throw new Exception("Illegal value");
 
-					Log.Information("Continuing with port: {0}",ports[portIndex]);
+					Log.Information("Continuing with port: {0}", ports[portIndex]);
 				}
 				catch (Exception ex)
 				{
@@ -54,25 +54,24 @@ namespace SemesterProject.Kortleser.CLI
 
 			using var comPort = new SerialPort(ports[portIndex], 9600, Parity.None, 8, StopBits.One);
 			comPort.Encoding = System.Text.Encoding.ASCII;
-			if (!comPort.IsOpen)
+			try
 			{
-				try
-				{
-					comPort.Open();
-				}
-				catch (Exception ex)
-				{
-					Log.Fatal(ex, "Failed to open serial port...");
-					return;
-				}
+				comPort.Open();
 			}
+			catch (Exception ex)
+			{
+				Log.Information("Failed to open serial port...");
+				Log.Fatal(ex, "Failed to open serial port...");
+				return;
+			}
+
 
 			using var dataReader = new SerialCommunicator(comPort);
 			dataReader.StatusRecieved += DataReader_StatusRecieved;
 
 			Console.CancelKeyPress += Console_CancelKeyPress;
 
-			for(;!programStopFlag;)
+			for (; !programStopFlag;)
 			{
 				await Task.Delay(1);
 			}

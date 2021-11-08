@@ -12,7 +12,7 @@ namespace SemesterProject.NetworkCommunication
 	public class SocketServer: IDisposable
 	{
 		Socket _listener;
-		List<SocketClientSession> sessions;
+		List<ClientSessionServerSide> sessions;
 
 		Task _worker;
 		CancellationTokenSource _canceler;
@@ -40,7 +40,7 @@ namespace SemesterProject.NetworkCommunication
 			_crypto = aes;
 			_listener = listener;
 			_listener.Listen(1000);
-			sessions = new List<SocketClientSession>();
+			sessions = new List<ClientSessionServerSide>();
 
 			_canceler = new CancellationTokenSource();
 			_worker = Task.Run(() =>
@@ -74,9 +74,16 @@ namespace SemesterProject.NetworkCommunication
 
 		void update()
 		{
-			var client = _listener.Accept();
-			Log.Information($"New connection from {client.RemoteEndPoint}");
-			sessions.Add(new SocketClientSession(client,_crypto));
+			try
+			{
+				var client = _listener.Accept();
+				Log.Information($"New connection from {client.RemoteEndPoint}");
+				sessions.Add(new ClientSessionServerSide(client, _crypto));
+			}
+			catch (Exception ex)
+			{
+				Log.Error(ex, "Unknown error");
+			}
 		}
 	}
 }
