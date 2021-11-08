@@ -6,17 +6,18 @@ using Serilog;
 
 namespace ELE301.SemesterProject.SerialCommunication
 {
-	public class SerialStatusStringReader : IDisposable
+	public partial class SerialStatusStringReader : IDisposable
 	{
-		SerialStatusStringParserFsm fsm;
+		DataParserStateMachine fsm;
 		SerialPort port;
 		public event EventHandler<SerialStatusUpdateEventArgs> StatusRecieved;
 		Task updater;
 		CancellationTokenSource updateCanceler;
+
 		public SerialStatusStringReader(SerialPort serialPort)
 		{
 			port = serialPort;
-			fsm = new SerialStatusStringParserFsm();
+			fsm = new DataParserStateMachine();
 			updateCanceler = new CancellationTokenSource();
 			updater = Task.Run( async () =>
 			{
@@ -51,12 +52,6 @@ namespace ELE301.SemesterProject.SerialCommunication
 			{
 				Log.Error(ex, "Serial operations failed");
 			}
-		}
-
-		protected virtual void OnStatusRecieved(SerialStatusUpdateEventArgs e)
-		{
-			EventHandler<SerialStatusUpdateEventArgs> handler = StatusRecieved;
-			handler?.Invoke(this, e);
 		}
 
 		public void Dispose()

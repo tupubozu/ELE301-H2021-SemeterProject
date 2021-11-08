@@ -62,12 +62,19 @@ namespace ELE301.SemesterProject.NetworkCommunication
 			{
 				SerialStatusData data;
 				int rawBuffer_cnt = _client.Receive(_rawBuffer);
-				using (var decryptor = _crypto.CreateDecryptor())
+				using (var rawMem = new MemoryStream(_rawBuffer))
 				{
-					int cryptoBuffer_cnt = decryptor.TransformBlock(_rawBuffer, 0, rawBuffer_cnt, _cryptoBuffer, 0);
-					BinaryFormatter binaryFormatter = new BinaryFormatter();
-					data = binaryFormatter?.Deserialize(new MemoryStream(_cryptoBuffer, 0, cryptoBuffer_cnt, false, false)) as SerialStatusData;
+					using (var decryptor = _crypto.CreateDecryptor())
+					{
+						using (var cryptoStr = new CryptoStream(rawMem, decryptor, CryptoStreamMode.Read))
+						{
+							int cryptoBuffer_cnt = cryptoStr.Read(_cryptoBuffer, 0, rawBuffer_cnt);
+							BinaryFormatter binaryFormatter = new BinaryFormatter();
+							data = binaryFormatter?.Deserialize(new MemoryStream(_cryptoBuffer, 0, cryptoBuffer_cnt, false, false)) as SerialStatusData;
+						}
+					}
 				}
+
 			}
 		}
 	}
