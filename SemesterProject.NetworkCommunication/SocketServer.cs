@@ -14,9 +14,8 @@ namespace SemesterProject.NetworkCommunication
 		Socket _listener;
 		List<ClientSessionServerSide> sessions;
 
-		Task _worker;
-		CancellationTokenSource _canceler;
-
+		Thread worker;
+		
 		Aes _crypto;
 
 		public SocketServer(Aes aes)
@@ -42,37 +41,56 @@ namespace SemesterProject.NetworkCommunication
 			_listener.Listen(1000);
 			sessions = new List<ClientSessionServerSide>();
 
-			_canceler = new CancellationTokenSource();
-			_worker = Task.Run(() =>
+			worker = new Thread(() =>
 			{
-				for (; !_canceler.Token.IsCancellationRequested;)
-					this.update();
-			}, _canceler.Token);
+				try
+				{
+					for (; ; )
+						this.update();
+				}
+				catch (ThreadAbortException ex)
+				{
+					Log.Information(ex, "Worker thread aborted");
+				}
+				catch (Exception ex)
+				{
+					Log.Error(ex, "Unknown error");
+				}
+			});
+			worker.Start();
+			Log.Information("Server thread started");
 		}
 
 
 		~SocketServer()
 		{
+			Log.Debug(this.ToString(), "Destuctor");
 			this.Dispose();
 		}
 
 		public void Dispose()
 		{
+			Log.Debug(this.ToString(), "Dispose");
 			try
 			{
-				_canceler?.Cancel();
-				_worker?.Wait(100);
-				_worker?.Dispose();
+				worker?.Abort();
+				worker?.Join();
 
 				foreach (var session in sessions) session?.Dispose();
-				_canceler?.Dispose();
 				_listener?.Dispose();
 			}
-			catch (Exception)
-			{ }
+			catch (Exception ex)
+			{
+				Log.Error(ex, "Unkown error");
+			}
 		}
 
-		void update()
+        public override string ToString()
+        {
+            return base.ToString();
+        }
+
+        void update()
 		{
 			try
 			{
@@ -80,9 +98,9 @@ namespace SemesterProject.NetworkCommunication
 				Log.Information($"New connection from {client.RemoteEndPoint}");
 				sessions.Add(new ClientSessionServerSide(client, _crypto));
 			}
-			catch (Exception ex)
+			catch (SocketException ex)
 			{
-				Log.Error(ex, "Unknown error");
+				Log.Error(ex, "Network error");
 			}
 		}
 	}

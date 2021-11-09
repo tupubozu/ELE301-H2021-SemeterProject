@@ -5,8 +5,10 @@ using System.Runtime.Serialization.Json;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Security;
 using System.Security.Cryptography;
 using SemesterProject.Common.Core;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using Serilog;
@@ -19,9 +21,8 @@ namespace SemesterProject.NetworkCommunication
 		Socket _client;
 		NetworkStream _clientStream;
 
-		Task _worker;
-		CancellationTokenSource _canceler;
-
+		Thread worker;
+		
 		Aes _crypto;
 
 		Queue<Dictionary<int, int>> allowedKeyTableQueue;
@@ -33,12 +34,23 @@ namespace SemesterProject.NetworkCommunication
 			allowedKeyTableQueue = new Queue<Dictionary<int, int>>();
 			_crypto = aes;
 
-			_canceler = new CancellationTokenSource();
-			_worker = Task.Run(async () =>
+			worker = new Thread( () =>
 			{
-				for (; !_canceler.Token.IsCancellationRequested;)
-					await this.update();
-			}, _canceler.Token);
+				try
+				{
+					for (; ; )
+						this.update();
+				}
+				catch (ThreadAbortException ex)
+				{
+					Log.Information(ex, "Worker thread aborted");
+				}
+				catch (Exception ex)
+                {
+					Log.Error(ex, "Unknown error");
+                }
+			});
+			worker.Start();
 		}
 		~ClientSessionServerSide()
 		{
@@ -49,18 +61,17 @@ namespace SemesterProject.NetworkCommunication
 		{
 			try
 			{
-				_canceler?.Cancel();
-				_worker?.Wait(100);
-				_worker?.Dispose();
-				_canceler?.Dispose();
-				_crypto.Dispose();
+				worker?.Abort();
+				worker?.Join();
 				_clientStream.Dispose();
 			}
-			catch (Exception)
-			{ }
+			catch (Exception ex)
+			{
+				Log.Error(ex, "Unkown error");
+			}
 		}
 
-		async Task update()
+		void update()
 		{
 			try
 			{
@@ -87,11 +98,19 @@ namespace SemesterProject.NetworkCommunication
 					}
 				}
 			}
-			catch (Exception ex)
+			catch (ArgumentException ex)
 			{
 				Log.Error(ex, "Network communiction failed: {0}", _client);
 			}
-			
+			catch (SerializationException ex)
+			{
+				Log.Error(ex, "Network communiction failed: {0}", _client);
+			}
+			catch (SecurityException ex)
+			{
+				Log.Error(ex, "Network communiction failed: {0}", _client);
+			}
+
 		}
 	}
 }
