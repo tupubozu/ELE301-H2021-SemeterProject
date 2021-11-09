@@ -14,7 +14,8 @@ namespace SemesterProject.NetworkCommunication
 		Socket _listener;
 		List<ClientSessionServerSide> sessions;
 
-		Thread worker;
+		CancellationTokenSource cancellation;
+		Task worker;
 		
 		Aes _crypto;
 
@@ -38,26 +39,31 @@ namespace SemesterProject.NetworkCommunication
 			Log.Information($"Starting server on {listener.LocalEndPoint}");
 			_crypto = aes;
 			_listener = listener;
+			_listener.Blocking = false;
 			_listener.Listen(1000);
 			sessions = new List<ClientSessionServerSide>();
+			cancellation = new CancellationTokenSource();
 
-			worker = new Thread(() =>
+			worker = Task.Run(() =>
 			{
 				try
 				{
-					for (; ; )
+					for (; !cancellation.IsCancellationRequested;)
+					{
+						cancellation.Token.ThrowIfCancellationRequested();
 						this.update();
+					}
 				}
-				catch (ThreadAbortException ex)
+				catch (OperationCanceledException ex)
 				{
-					Log.Information(ex, "Worker thread aborted");
+					Log.Debug(ex, "Worker thread aborted");
 				}
 				catch (Exception ex)
 				{
 					Log.Error(ex, "Unknown error");
 				}
-			});
-			worker.Start();
+			}, cancellation.Token);
+
 			Log.Information("Server thread started");
 		}
 
@@ -70,11 +76,20 @@ namespace SemesterProject.NetworkCommunication
 
 		public void Dispose()
 		{
-			Log.Debug(this.ToString(), "Dispose");
+			Log.Debug(messageTemplate: "Dispose {0}", this);
 			try
 			{
-				worker?.Abort();
-				worker?.Join();
+				Log.Debug("Stopping worker");
+
+				cancellation?.Cancel();
+				if (!worker.IsCompleted)
+					worker?.Wait();
+
+				Log.Debug("Stopped worker");
+
+
+				worker?.Dispose();
+				cancellation?.Dispose();
 
 				foreach (var session in sessions) session?.Dispose();
 				_listener?.Dispose();
@@ -85,12 +100,12 @@ namespace SemesterProject.NetworkCommunication
 			}
 		}
 
-        public override string ToString()
-        {
-            return base.ToString();
-        }
+		public override string ToString()
+		{
+			return base.ToString();
+		}
 
-        void update()
+		void update()
 		{
 			try
 			{
@@ -100,7 +115,7 @@ namespace SemesterProject.NetworkCommunication
 			}
 			catch (SocketException ex)
 			{
-				Log.Error(ex, "Network error");
+				Log.Debug(ex, "Network error");
 			}
 		}
 	}

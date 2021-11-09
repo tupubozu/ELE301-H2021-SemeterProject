@@ -12,7 +12,7 @@ namespace SemesterProject.Kortleser.CLI
 		static bool programStopFlag = false;
 		static async Task Main(string[] args)
 		{
-			SetupLoging();
+			ProgramCore.SetupLoging();
 
 			Log.Information("Starting program");
 			Console.WriteLine("KORTLESER v0.0.1\n\tSemestergruppe 13");
@@ -69,19 +69,14 @@ namespace SemesterProject.Kortleser.CLI
 			using var dataReader = new SerialCommunicator(comPort);
 			dataReader.StatusRecieved += DataReader_StatusRecieved;
 
-			Console.CancelKeyPress += Console_CancelKeyPress;
+			Console.CancelKeyPress += ProgramCore.Console_CancelKeyPress;
 
-			for (; !programStopFlag;)
-			{
-				await Task.Delay(1);
-			}
+			await ProgramCore.checkStopFlag();
 			Log.Information("End of program");
-		}
 
-		private static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
-		{
-			Log.Information("Keyboard interrupt: Setting stop-flag to true...");
-			programStopFlag = true;
+#if DEBUG
+			Console.ReadKey(true);
+#endif
 		}
 
 		private static void DataReader_StatusRecieved(object sender, SerialStatusUpdateEventArgs e)
@@ -97,15 +92,6 @@ namespace SemesterProject.Kortleser.CLI
 				default:
 					break;
 			}
-		}
-
-		static void SetupLoging()
-		{
-			Log.Logger = new LoggerConfiguration()
-				.WriteTo.Console(Serilog.Events.LogEventLevel.Debug)
-				.Enrich.FromLogContext()
-				.MinimumLevel.Debug()
-				.CreateLogger();
 		}
 	}
 }

@@ -7,7 +7,7 @@ using Serilog;
 
 namespace SemesterProject.Common.Core
 { 
-    [Serializable]
+	[Serializable]
 	public class AesSecret
 	{
 		public byte[] Key;

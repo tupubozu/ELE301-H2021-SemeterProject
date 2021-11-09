@@ -21,7 +21,8 @@ namespace SemesterProject.NetworkCommunication
 		Socket _client;
 		NetworkStream _clientStream;
 
-		Thread worker;
+		CancellationTokenSource cancellation;
+		Task worker;
 		
 		Aes _crypto;
 
@@ -34,23 +35,25 @@ namespace SemesterProject.NetworkCommunication
 			allowedKeyTableQueue = new Queue<Dictionary<int, int>>();
 			_crypto = aes;
 
-			worker = new Thread( () =>
+			cancellation = new CancellationTokenSource();
+
+			worker = Task.Run( () =>
 			{
 				try
 				{
-					for (; ; )
+					for (; !cancellation.IsCancellationRequested;)
+						cancellation.Token.ThrowIfCancellationRequested();
 						this.update();
 				}
-				catch (ThreadAbortException ex)
+				catch (OperationCanceledException ex)
 				{
 					Log.Information(ex, "Worker thread aborted");
 				}
 				catch (Exception ex)
-                {
+				{
 					Log.Error(ex, "Unknown error");
-                }
-			});
-			worker.Start();
+				}
+			}, cancellation.Token);
 		}
 		~ClientSessionServerSide()
 		{
@@ -59,11 +62,18 @@ namespace SemesterProject.NetworkCommunication
 
 		public void Dispose()
 		{
+			Log.Debug(messageTemplate: "Dispose {0}", this);
 			try
 			{
-				worker?.Abort();
-				worker?.Join();
-				_clientStream.Dispose();
+				cancellation?.Cancel();
+				if (!worker.IsCompleted)
+					worker?.Wait();
+
+				worker?.Dispose();
+				cancellation?.Dispose();
+
+				_clientStream?.Dispose();
+				_client?.Dispose();
 			}
 			catch (Exception ex)
 			{
