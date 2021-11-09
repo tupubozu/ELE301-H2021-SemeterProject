@@ -16,7 +16,8 @@ namespace SemesterProject.NetworkCommunication
 {
     public class SocketSessionClientSide : IDisposable
     {
-        const ushort validator = 1999; 
+        const ushort validator = 1999;
+        const int listenPort = 9001;
         Queue<SerialStatusData> statusDataQueue = new Queue<SerialStatusData>();
         public Dictionary<int, int> AllowedKeyTable = new Dictionary<int, int>();
 
@@ -42,16 +43,14 @@ namespace SemesterProject.NetworkCommunication
 
             server = null;
 
-            int tempPort = 9002;
-            UDPInitRetry:
             try
             {
-                broadcastInterceptor = new UdpClient(tempPort);
+                broadcastInterceptor = new UdpClient(listenPort);
             }
             catch (SocketException ex)
             {
-                Log.Debug(ex, "Failed to bind UdpClient to port {0}", tempPort++);
-                goto UDPInitRetry;
+                Log.Debug(ex, "Failed to bind UdpClient to port {0}", listenPort);
+                broadcastInterceptor = null;
             }
 
             Log.Information("Starting broadcast listener on {0}", broadcastInterceptor.Client.LocalEndPoint);
