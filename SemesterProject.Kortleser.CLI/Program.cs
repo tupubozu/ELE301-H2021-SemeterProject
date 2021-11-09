@@ -81,17 +81,8 @@ namespace SemesterProject.Kortleser.CLI
 
 		private static void DataReader_StatusRecieved(object sender, SerialStatusUpdateEventArgs e)
 		{
-			Log.Information("Serial status data recieved");
-
-			switch (e.statusData.Source)
-			{
-				case SerialStatusData.DataSource.Physical:
-					break;
-				case SerialStatusData.DataSource.Simulation:
-					break;
-				default:
-					break;
-			}
+			Log.Information("Serial status data recieved from node {0}",e.StatusData.NodeNumber);
+			Console.WriteLine(e.StatusData);
 		}
 	}
 }

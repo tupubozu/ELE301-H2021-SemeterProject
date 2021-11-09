@@ -25,7 +25,7 @@ namespace SemesterProject.SerialCommunication
 				if (ctrl)
 				{
 					e = new SerialStatusUpdateEventArgs();
-					e.statusData = ParserData.ParseStatusData(parserData);
+					e.StatusData = ParserData.ParseStatusData(parserData);
 				}
 				else
 				{

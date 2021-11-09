@@ -30,5 +30,9 @@ namespace SemesterProject.Common.Core
 			TemperatureIC2 = init_TemperatureIC2;
 			Source = init_Source;
 		}
-	}
+        public override string ToString()
+        {
+			return $"Node: {NodeNumber}, Type: {Source}, Timestamp: {Timestamp}";
+        }
+    }
 }

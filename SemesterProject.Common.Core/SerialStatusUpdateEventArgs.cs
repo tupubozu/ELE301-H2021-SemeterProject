@@ -4,7 +4,7 @@ namespace SemesterProject.Common.Core
 {
 	public class SerialStatusUpdateEventArgs : EventArgs
 	{
-		public SerialStatusData statusData;
+		public SerialStatusData StatusData;
 
 		public static new SerialStatusUpdateEventArgs Empty
 		{
