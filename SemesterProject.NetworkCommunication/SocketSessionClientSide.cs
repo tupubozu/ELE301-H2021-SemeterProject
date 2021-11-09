@@ -50,7 +50,7 @@ namespace SemesterProject.NetworkCommunication
             }
             catch (SocketException ex)
             {
-                Log.Debug(ex, "Failed to bind UdpClient to port {}", tempPort++);
+                Log.Debug(ex, "Failed to bind UdpClient to port {0}", tempPort++);
                 goto UDPInitRetry;
             }
 
