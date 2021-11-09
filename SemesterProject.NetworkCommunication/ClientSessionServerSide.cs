@@ -43,9 +43,11 @@ namespace SemesterProject.NetworkCommunication
 			{
 				try
 				{
-					for (; ;)
+					for (; ; )
+					{
 						cancellation.Token.ThrowIfCancellationRequested();
 						this.update();
+					}
 				}
 				catch (OperationCanceledException ex)
 				{
@@ -64,12 +66,15 @@ namespace SemesterProject.NetworkCommunication
 
 		public void Dispose()
 		{
-			Log.Debug(messageTemplate: "Dispose {0}", this);
+			Log.Debug("Dispose {0}", this.GetType().Name);
 			try
 			{
+				Log.Debug("Stopping worker: {0}", this.GetType().Name);
 				cancellation?.Cancel();
 				if (!worker.IsCompleted)
 					worker?.Wait();
+				Log.Debug("Stopped worker: {0}", this.GetType().Name);
+
 
 				worker?.Dispose();
 				cancellation?.Dispose();

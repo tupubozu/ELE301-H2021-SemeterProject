@@ -36,7 +36,7 @@ namespace SemesterProject.NetworkCommunication
 
 		private void init(Socket listener, Aes aes)
 		{
-			Log.Information($"Starting server on {listener.LocalEndPoint}");
+			Log.Information("Starting server on {0}", listener.LocalEndPoint);
 			_crypto = aes;
 			_listener = listener;
 			_listener.Blocking = false;
@@ -64,7 +64,7 @@ namespace SemesterProject.NetworkCommunication
 				}
 			}, cancellation.Token);
 
-			Log.Information("Server thread started");
+			Log.Information("Started server on {0}", listener.LocalEndPoint);
 		}
 
 
@@ -102,7 +102,7 @@ namespace SemesterProject.NetworkCommunication
 
 		public override string ToString()
 		{
-			return base.ToString();
+			return $"{base.GetType().Name}({_listener})";
 		}
 
 		async Task update()
@@ -121,6 +121,7 @@ namespace SemesterProject.NetworkCommunication
 			}
 
 			List<ClientSessionServerSide> rmList = new List<ClientSessionServerSide>();
+			Log.Debug("Checking for expired/inactive sessions");
             foreach (var session in sessions)
             {
 				if (session.IsCompleted)
@@ -128,12 +129,16 @@ namespace SemesterProject.NetworkCommunication
 					rmList.Add(session);
 				}
             }
+			Log.Debug("Found for expired/inactive sessions: {0}", rmList.Count);
 
-            foreach (var session in rmList)
+			Log.Debug("Removing expired/inactive sessions");
+			foreach (var session in rmList)
             {
 				session.Dispose();
 				sessions.Remove(session);
             }
+			Log.Debug("Removed expired/inactive sessions");
+
 		}
 	}
 }

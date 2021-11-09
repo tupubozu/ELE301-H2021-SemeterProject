@@ -9,7 +9,6 @@ namespace SemesterProject.Kortleser.CLI
 {
 	class Program
 	{
-		static bool programStopFlag = false;
 		static async Task Main(string[] args)
 		{
 			ProgramCore.SetupLoging();

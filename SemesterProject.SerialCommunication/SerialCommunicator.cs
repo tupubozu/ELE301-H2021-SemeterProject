@@ -23,11 +23,29 @@ namespace SemesterProject.SerialCommunication
 			port = serialPort;
 			fsm = new DataParserStateMachine();
 			updateCanceler = new CancellationTokenSource();
-			updater = Task.Run( async () =>
+
+			Log.Information("Starting monitoring on {0}", port.PortName);
+			updater = Task.Run(async () =>
 			{
-				for (; !updateCanceler.Token.IsCancellationRequested; )
-					await this.Update();
-			},updateCanceler.Token);
+				try
+				{
+					for (; ; )
+					{
+						updateCanceler.Token.ThrowIfCancellationRequested();
+						await this.Update();
+					}
+				}
+				catch (OperationCanceledException ex)
+				{
+					Log.Debug(ex, "Worker thread aborted");
+				}
+				catch (Exception ex)
+				{
+					Log.Error(ex, "Unknown error");
+				}
+
+			}, updateCanceler.Token);
+			Log.Information("Started monitoring on {0}", port.PortName);
 		}
 
 		~SerialCommunicator()
@@ -44,19 +62,28 @@ namespace SemesterProject.SerialCommunication
 		{
 			try
 			{
-				while (port.BytesToRead != 0)
+				if (port.BytesToRead != 0)
 				{
-					if (fsm.Update((char)port.ReadChar(), out SerialStatusUpdateEventArgs e))
+					Log.Debug("Handling serial input bytes: {0}", port.BytesToRead);
+					for (; ; )
 					{
-						StatusRecieved?.Invoke(this, e);
+						if (port.BytesToRead == 0) break;
+						else if (fsm.Update((char)port.ReadChar(), out SerialStatusUpdateEventArgs e))
+						{
+							StatusRecieved?.Invoke(this, e);
+						}
 					}
 				}
-
-				if (fsm.CurrentState == DataParserStateMachine.StateFlag.Closed && commandQueue.Count > 0)
+				else if (fsm.CurrentState == DataParserStateMachine.StateFlag.Closed && commandQueue.Count > 0)
 				{
+					Log.Debug("Handling serial command: {0}", commandQueue.Peek());
 					port.WriteLine(commandQueue.Dequeue().ToString());
 				}
-				else await Task.Delay(5);
+				else
+				{
+					Log.Debug("Pausing serial operations");
+					await Task.Delay(5);
+				}
 			}
 			catch (Exception ex)
 			{
@@ -64,17 +91,24 @@ namespace SemesterProject.SerialCommunication
 			}
 		}
 
-		public void Dispose()
+		public async void Dispose()
 		{
+			Log.Debug("Dispose {0}", this.GetType().Name);
 			try
 			{
+				Log.Debug("Stopping worker: {0}", this.GetType().Name);
 				updateCanceler?.Cancel();
-				updater?.Wait(100);
+				if (!updater.IsCompleted)
+					await updater;
+				Log.Debug("Stopped worker: {0}", this.GetType().Name);
+
 				updater?.Dispose();
 				updateCanceler?.Dispose();
 			}
-			catch (Exception)
-			{ }
+			catch (Exception ex)
+			{
+				Log.Error(ex, "Unknown error");
+			}
 		}
 	}
 }
