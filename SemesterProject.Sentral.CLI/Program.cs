@@ -116,7 +116,6 @@ namespace SemesterProject.Sentral.CLI
 		}
 	}
 	[Serializable]
-	[JsonSerializable(typeof(DbSettings))]
 	public class DbSettings
 	{
 		public string Username = "user";
