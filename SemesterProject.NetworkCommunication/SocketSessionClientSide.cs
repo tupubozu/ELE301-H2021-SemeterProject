@@ -42,7 +42,17 @@ namespace SemesterProject.NetworkCommunication
 
             server = null;
 
-            broadcastInterceptor = new UdpClient(9001);
+            int tempPort = 9002;
+            UDPInitRetry:
+            try
+            {
+                broadcastInterceptor = new UdpClient(tempPort);
+            }
+            catch (SocketException ex)
+            {
+                Log.Debug(ex, "Failed to bind UdpClient to port {}", tempPort++);
+                goto UDPInitRetry;
+            }
 
             Log.Information("Starting broadcast listener on {0}", broadcastInterceptor.Client.LocalEndPoint);
             broadcastListener = Task.Run(() =>
