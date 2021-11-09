@@ -26,6 +26,8 @@ namespace SemesterProject.NetworkCommunication
 		
 		Aes _crypto;
 
+		public bool IsCompleted { get => worker.IsCompleted; }
+
 		Queue<Dictionary<int, int>> allowedKeyTableQueue;
 
 		public ClientSessionServerSide(Socket client, Aes aes)
@@ -41,7 +43,7 @@ namespace SemesterProject.NetworkCommunication
 			{
 				try
 				{
-					for (; !cancellation.IsCancellationRequested;)
+					for (; ;)
 						cancellation.Token.ThrowIfCancellationRequested();
 						this.update();
 				}

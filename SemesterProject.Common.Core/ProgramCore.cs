@@ -35,7 +35,7 @@ namespace SemesterProject.Common.Core
 			e.Cancel = true;
 		}
 
-		public static async Task checkStopFlag()
+		public static async Task CheckStopFlag()
 		{
 			Log.Debug("Awaiting stop flag");
 			for (; ; )

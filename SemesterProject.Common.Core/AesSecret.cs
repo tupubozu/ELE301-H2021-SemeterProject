@@ -22,29 +22,37 @@ namespace SemesterProject.Common.Core
 			if (!File.Exists(secretsPath) || forceSecretsCreation)
 			{
 				if (!forceSecretsCreation) Log.Information("Secrets not found");
-				Directory.CreateDirectory(Path.GetDirectoryName(secretsPath));
-
-				Log.Information("Generating secrets");
-				aes.GenerateKey();
-				aes.GenerateIV();
-				aesSecret = new AesSecret()
+				try
 				{
-					Key = aes.Key,
-					IV = aes.IV
-				};
+					Directory.CreateDirectory(Path.GetDirectoryName(secretsPath));
 
-				Log.Information("Generating serializeable sectrets object");
-				using (var secretsFile = new FileStream(secretsPath, FileMode.Create, FileAccess.Write))
-				{
-					Log.Information("Creating new secrets file");
-					var serializer = new XmlSerializer(typeof(AesSecret));
-					serializer.Serialize(secretsFile, aesSecret);
-					Log.Information("Secrets file created");
+					Log.Information("Generating secrets");
+					aes.GenerateKey();
+					aes.GenerateIV();
+					aesSecret = new AesSecret()
+					{
+						Key = aes.Key,
+						IV = aes.IV
+					};
+
+					Log.Information("Generating serializeable sectrets object");
+					using (var secretsFile = new FileStream(secretsPath, FileMode.Create, FileAccess.Write))
+					{
+						Log.Information("Creating new secrets file");
+						var serializer = new XmlSerializer(typeof(AesSecret));
+						serializer.Serialize(secretsFile, aesSecret);
+						Log.Information("Secrets file created");
+					}
+				}
+				catch (Exception ex)
+                {
+					Log.Error(ex, "Secrets creation failed");
+
 				}
 			}
 			else
 			{
-				Log.Information("Serializing secrets from secrets file");
+				Log.Information("Serializing AES secrets from secrets file");
 
 				try
 				{
@@ -52,6 +60,11 @@ namespace SemesterProject.Common.Core
 					{
 						var serializer = new XmlSerializer(typeof(AesSecret));
 						aesSecret = serializer.Deserialize(secretsFile) as AesSecret;
+					}
+
+					if (aesSecret is null)
+					{
+						throw new NullReferenceException();
 					}
 
 					//aesSecret = JsonSerializer.Deserialize<AesSecret>(secretPath);
@@ -62,7 +75,6 @@ namespace SemesterProject.Common.Core
 					forceSecretsCreation = true;
 					Log.Information("Secrets invalid: Forcing generation of new values");
 					goto ForcedSecretsCreation;
-					throw;
 				}
 
 				aes.Key = aesSecret.Key;

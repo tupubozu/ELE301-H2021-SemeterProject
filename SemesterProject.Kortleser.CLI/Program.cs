@@ -71,7 +71,7 @@ namespace SemesterProject.Kortleser.CLI
 
 			Console.CancelKeyPress += ProgramCore.Console_CancelKeyPress;
 
-			await ProgramCore.checkStopFlag();
+			await ProgramCore.CheckStopFlag();
 			Log.Information("End of program");
 
 #if DEBUG

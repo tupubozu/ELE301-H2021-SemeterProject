@@ -44,14 +44,14 @@ namespace SemesterProject.NetworkCommunication
 			sessions = new List<ClientSessionServerSide>();
 			cancellation = new CancellationTokenSource();
 
-			worker = Task.Run(() =>
+			worker = Task.Run(async () =>
 			{
 				try
 				{
-					for (; !cancellation.IsCancellationRequested;)
+					for (; ; )
 					{
 						cancellation.Token.ThrowIfCancellationRequested();
-						this.update();
+						await this.update();
 					}
 				}
 				catch (OperationCanceledException ex)
@@ -105,7 +105,7 @@ namespace SemesterProject.NetworkCommunication
 			return base.ToString();
 		}
 
-		void update()
+		async Task update()
 		{
 			try
 			{
@@ -115,8 +115,25 @@ namespace SemesterProject.NetworkCommunication
 			}
 			catch (SocketException ex)
 			{
+				Task task = Task.Delay(100);
 				Log.Debug(ex, "Network error");
+				await task;
 			}
+
+			List<ClientSessionServerSide> rmList = new List<ClientSessionServerSide>();
+            foreach (var session in sessions)
+            {
+				if (session.IsCompleted)
+				{
+					rmList.Add(session);
+				}
+            }
+
+            foreach (var session in rmList)
+            {
+				session.Dispose();
+				sessions.Remove(session);
+            }
 		}
 	}
 }

@@ -5,14 +5,17 @@ using System.Security.Cryptography;
 using Serilog;
 using System.Threading.Tasks;
 using System.Threading;
+using Npgsql;
+using Microsoft.Extensions.Configuration.UserSecrets;
+using System.IO;
+using System.Text;
+using System.Text.Json;
+using System.Xml.Serialization;
 
 namespace SemesterProject.Sentral.CLI
 {
 	class Program
 	{
-		
-		static bool programStopFlag = false;
-		static object syncObject = new object();
 		static async Task Main(string[] args)
 		{
 			ProgramCore.SetupLoging();
@@ -28,18 +31,98 @@ namespace SemesterProject.Sentral.CLI
 
 			AesSecret aesSecret = AesSecret.GetSecret(aes);
 
+			NpgsqlConnection conn = GetDbConnection();
+
 			Console.CancelKeyPress += ProgramCore.Console_CancelKeyPress;
+			{
+				Log.Information("Creating server object");
+				using SocketServer socketServer = new(aes);
 
-			Log.Information("Creating server object");
-			using SocketServer socketServer = new(aes);
-
-			await ProgramCore.checkStopFlag();
-
+				await ProgramCore.CheckStopFlag();
+			}
 			Log.Information("End of program");
 
 #if DEBUG
 			Console.ReadKey(true);
 #endif
 		}
+		static NpgsqlConnection GetDbConnection()
+		{
+			string dbSecrets = PathHelper.GetSecretsPathFromSecretsId("2582243a-5592-4d35-96c1-e622e5f09a1a");
+			
+			DbSettings settings = null;
+
+			bool forceSecretsCreation = false;
+		ForcedSecretsCreation:
+			if (!File.Exists(dbSecrets) || forceSecretsCreation)
+			{
+				if (!forceSecretsCreation) Log.Information("Database secrets not found");
+
+				Log.Information("Generating secrets");
+				settings = new();
+
+				try
+				{
+					Log.Information("Generating serializeable sectrets object");
+					string secretContent = JsonSerializer.Serialize(settings);
+					Log.Information("Creating new secrets file");
+					Directory.CreateDirectory(Path.GetDirectoryName(dbSecrets));
+					using var secretsFile = File.Open(dbSecrets, FileMode.Create, FileAccess.Write);
+					using var secretsWriter = new StreamWriter(secretsFile, Encoding.UTF8);
+					secretsWriter.WriteLine(secretContent);
+					Log.Information("Secrets file created");
+				}
+				catch(Exception ex)
+                {
+					Log.Error(ex, "Secrets creation failed");
+                }
+			}
+			else
+			{
+				Log.Information("Serializing database secrets from secrets file");
+
+				try
+				{
+					using var secretsFile = File.Open(dbSecrets, FileMode.Open, FileAccess.Read);
+					settings = JsonSerializer.Deserialize(secretsFile, typeof(DbSettings)) as DbSettings;
+					if (settings is null)
+					{
+						throw new NullReferenceException();
+					}
+					
+				}
+				catch (Exception ex)
+				{
+					Log.Error(ex, "Serialization failed");
+					forceSecretsCreation = true;
+					Log.Information("Secrets invalid: Forcing generation of new values");
+					goto ForcedSecretsCreation;
+				}
+			}
+
+			NpgsqlConnectionStringBuilder strBuilder = new NpgsqlConnectionStringBuilder();
+
+			strBuilder.Username = settings.Username;
+			strBuilder.Password = settings.Password;
+			strBuilder.Host = settings.Host;
+			strBuilder.Port = settings.Port;
+			strBuilder.TcpKeepAlive = settings.TcpKeepAlive;
+			strBuilder.KeepAlive = settings.KeepAlive;
+
+			NpgsqlConnection conn = new(strBuilder.ConnectionString);
+
+			return conn;
+		}
 	}
+	[Serializable]
+	class DbSettings
+	{
+		public string Username = "user";
+		public string Password = "pass";
+		public string Host = "127.0.0.1";
+		public int Port = 9001;
+		public bool TcpKeepAlive = true;
+		public int KeepAlive = 1;
+	}
+
 }
