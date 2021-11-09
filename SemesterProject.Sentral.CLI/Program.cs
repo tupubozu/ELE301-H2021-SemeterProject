@@ -11,6 +11,7 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Xml.Serialization;
+using System.Text.Json.Serialization;
 
 namespace SemesterProject.Sentral.CLI
 {
@@ -48,8 +49,9 @@ namespace SemesterProject.Sentral.CLI
 		}
 		static NpgsqlConnection GetDbConnection()
 		{
-			string dbSecrets = PathHelper.GetSecretsPathFromSecretsId("2582243a-5592-4d35-96c1-e622e5f09a1a");
-			
+			string dbSecrets = Path.Combine(Path.GetDirectoryName(PathHelper.GetSecretsPathFromSecretsId("2582243a-5592-4d35-96c1-e622e5f09a1a")), "dbSecrets.xml"); // XML
+			//string dbSecrets = PathHelper.GetSecretsPathFromSecretsId("2582243a-5592-4d35-96c1-e622e5f09a1a"); //JSON
+
 			DbSettings settings = null;
 
 			bool forceSecretsCreation = false;
@@ -64,12 +66,14 @@ namespace SemesterProject.Sentral.CLI
 				try
 				{
 					Log.Information("Generating serializeable sectrets object");
-					string secretContent = JsonSerializer.Serialize(settings);
+					//string secretContent = JsonSerializer.Serialize(settings);
 					Log.Information("Creating new secrets file");
 					Directory.CreateDirectory(Path.GetDirectoryName(dbSecrets));
 					using var secretsFile = File.Open(dbSecrets, FileMode.Create, FileAccess.Write);
-					using var secretsWriter = new StreamWriter(secretsFile, Encoding.UTF8);
-					secretsWriter.WriteLine(secretContent);
+					var serializer = new XmlSerializer(typeof(DbSettings));
+					serializer.Serialize(secretsFile, settings);
+					//using var secretsWriter = new StreamWriter(secretsFile, Encoding.UTF8);
+					//secretsWriter.WriteLine(secretContent);
 					Log.Information("Secrets file created");
 				}
 				catch(Exception ex)
@@ -84,7 +88,9 @@ namespace SemesterProject.Sentral.CLI
 				try
 				{
 					using var secretsFile = File.Open(dbSecrets, FileMode.Open, FileAccess.Read);
-					settings = JsonSerializer.Deserialize(secretsFile, typeof(DbSettings)) as DbSettings;
+					var serializer = new XmlSerializer(typeof(DbSettings));
+					settings = serializer.Deserialize(secretsFile) as DbSettings;
+					//settings = JsonSerializer.Deserialize(secretsFile, typeof(DbSettings)) as DbSettings;
 					if (settings is null)
 					{
 						throw new NullReferenceException();
@@ -104,6 +110,7 @@ namespace SemesterProject.Sentral.CLI
 
 			strBuilder.Username = settings.Username;
 			strBuilder.Password = settings.Password;
+			strBuilder.Database = settings.Database;
 			strBuilder.Host = settings.Host;
 			strBuilder.Port = settings.Port;
 			strBuilder.TcpKeepAlive = settings.TcpKeepAlive;
@@ -115,10 +122,12 @@ namespace SemesterProject.Sentral.CLI
 		}
 	}
 	[Serializable]
-	class DbSettings
+	[JsonSerializable(typeof(DbSettings))]
+	public class DbSettings
 	{
 		public string Username = "user";
 		public string Password = "pass";
+		public string Database = "base";
 		public string Host = "127.0.0.1";
 		public int Port = 9001;
 		public bool TcpKeepAlive = true;
