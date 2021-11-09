@@ -21,8 +21,8 @@ namespace SemesterProject.SerialCommunication
 				public static SerialStatusData ParseStatusData(ParserData data)
 				{
 					int offset = data.fields[data.fields.Length - 1] == string.Empty ? 1 : 0;
-					int date = Convert.ToByte(data.fields[1], 10);
-					int time = Convert.ToByte(data.fields[2], 10);
+					int date = Convert.ToInt32(data.fields[1], 10);
+					int time = Convert.ToInt32(data.fields[2], 10);
 
 					return new SerialStatusData(
 						init_UnitNumber: Convert.ToUInt16(data.fields[0], 10),
