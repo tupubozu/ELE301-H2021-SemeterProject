@@ -13,7 +13,7 @@ namespace SemesterProject.Common.Core
 		public byte[] Key;
 		public byte[] IV;
 
-		public static AesSecret GetSecret(Aes aes)
+		static AesSecret GetSetSecret(Aes aes)
 		{
 			bool forceSecretsCreation = false;
 			AesSecret aesSecret = null;
@@ -81,6 +81,19 @@ namespace SemesterProject.Common.Core
 				aes.IV = aesSecret.IV;
 			}
 			return aesSecret;
+		}
+
+		public static Aes GetAes()
+        {
+			Aes aes = Aes.Create();
+			aes.Mode = CipherMode.CFB;
+			aes.Padding = PaddingMode.ISO10126;
+			aes.KeySize = 128;
+			aes.BlockSize = 128;
+
+			AesSecret aesSecret = AesSecret.GetSetSecret(aes);
+
+			return aes;
 		}
 	}
 }

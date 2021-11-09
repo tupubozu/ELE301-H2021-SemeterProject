@@ -1,9 +1,11 @@
 ﻿using System;
 using SemesterProject.SerialCommunication;
+using SemesterProject.NetworkCommunication;
 using SemesterProject.Common.Core;
 using Serilog;
 using System.IO.Ports;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
 
 namespace SemesterProject.Kortleser.CLI
 {
@@ -64,9 +66,12 @@ namespace SemesterProject.Kortleser.CLI
 				return;
 			}
 
-
 			using var dataReader = new SerialCommunicator(comPort);
 			dataReader.StatusRecieved += DataReader_StatusRecieved;
+
+			Aes aes = AesSecret.GetAes();
+
+			SocketSessionClientSide socketSession = new SocketSessionClientSide(aes);
 
 			Console.CancelKeyPress += ProgramCore.Console_CancelKeyPress;
 

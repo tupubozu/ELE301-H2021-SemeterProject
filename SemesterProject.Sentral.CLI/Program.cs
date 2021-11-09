@@ -24,13 +24,7 @@ namespace SemesterProject.Sentral.CLI
 			Log.Information("Starting program");
 			Console.WriteLine("SENTRAL v0.0.1\n\tSemestergruppe 13");
 
-			using Aes aes = Aes.Create();
-			aes.Mode = CipherMode.CFB;
-			aes.Padding = PaddingMode.ISO10126;
-			aes.KeySize = 128;
-			aes.BlockSize = 128;
-
-			AesSecret aesSecret = AesSecret.GetSecret(aes);
+			using Aes aes = AesSecret.GetAes();
 
 			NpgsqlConnection conn = GetDbConnection();
 

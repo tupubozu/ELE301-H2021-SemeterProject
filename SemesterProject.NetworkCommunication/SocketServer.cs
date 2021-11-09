@@ -11,13 +11,20 @@ namespace SemesterProject.NetworkCommunication
 {
 	public class SocketServer: IDisposable
 	{
+		const ushort validator = 1999;
+
 		Socket _listener;
-		List<ClientSessionServerSide> sessions;
+		List<SocketSessionServerSide> sessions;
 
 		CancellationTokenSource cancellation;
 		Task worker;
 		
 		Aes _crypto;
+
+		UdpClient broadcast;
+		IPEndPoint broadcastEndPoint;
+		CancellationTokenSource broadcastCanceller;
+		Task broadcaster;
 
 		public SocketServer(Aes aes)
 		{
@@ -41,7 +48,7 @@ namespace SemesterProject.NetworkCommunication
 			_listener = listener;
 			_listener.Blocking = false;
 			_listener.Listen(1000);
-			sessions = new List<ClientSessionServerSide>();
+			sessions = new List<SocketSessionServerSide>();
 			cancellation = new CancellationTokenSource();
 
 			worker = Task.Run(async () =>
@@ -65,8 +72,51 @@ namespace SemesterProject.NetworkCommunication
 			}, cancellation.Token);
 
 			Log.Information("Started server on {0}", listener.LocalEndPoint);
+
+			initBroadcast();
 		}
 
+		async Task broadcastUpdate()
+		{
+			Task timeDelay = Task.Delay(5000);
+			byte[] buffer = { (validator & (0xff << 8)) >> 8, validator & 0xff };
+			broadcast.Send(buffer,2);
+			Log.Debug("Broadcast sendt");
+			await timeDelay;
+
+		}
+
+		void initBroadcast()
+		{
+			broadcastEndPoint = new IPEndPoint(IPAddress.Broadcast, 9001);
+			broadcastCanceller = new CancellationTokenSource();
+
+			broadcast = new UdpClient(9001);
+			broadcast.Connect(broadcastEndPoint);
+
+			Log.Information("Starting broadcaster on {0}", broadcast.Client.LocalEndPoint);
+			broadcaster = Task.Run(async () =>
+			{
+				try
+				{
+					for (; ; )
+					{
+						broadcastCanceller.Token.ThrowIfCancellationRequested();
+						await broadcastUpdate();
+					}
+				}
+				catch (OperationCanceledException ex)
+				{
+					Log.Debug(ex, "Broadcast listener stopped");
+				}
+				catch (Exception ex)
+				{
+					Log.Error(ex, "Unknown error");
+				}
+
+			}, broadcastCanceller.Token);
+			Log.Information("Started broadcaster on {0}", broadcast.Client.LocalEndPoint);
+		}
 
 		~SocketServer()
 		{
@@ -79,15 +129,19 @@ namespace SemesterProject.NetworkCommunication
 			Log.Debug(messageTemplate: "Dispose {0}", this);
 			try
 			{
-				Log.Debug("Stopping worker");
+				Log.Debug("Stopping broadcaster: {0}", this.GetType().Name);
+				broadcastCanceller?.Cancel();
+				if (!broadcaster.IsCompleted)
+					broadcaster?.Wait();
+				Log.Debug("Stopped broadcaster: {0}", this.GetType().Name);
+				broadcaster?.Dispose();
+				broadcastCanceller?.Dispose();
 
+				Log.Debug("Stopping worker: {0}", this.GetType().Name);
 				cancellation?.Cancel();
 				if (!worker.IsCompleted)
 					worker?.Wait();
-
-				Log.Debug("Stopped worker");
-
-
+				Log.Debug("Stopped worker: {0}", this.GetType().Name);
 				worker?.Dispose();
 				cancellation?.Dispose();
 
@@ -111,7 +165,7 @@ namespace SemesterProject.NetworkCommunication
 			{
 				var client = _listener.Accept();
 				Log.Information($"New connection from {client.RemoteEndPoint}");
-				sessions.Add(new ClientSessionServerSide(client, _crypto));
+				sessions.Add(new SocketSessionServerSide(client, _crypto));
 			}
 			catch (SocketException ex)
 			{
@@ -120,7 +174,7 @@ namespace SemesterProject.NetworkCommunication
 				await task;
 			}
 
-			List<ClientSessionServerSide> rmList = new List<ClientSessionServerSide>();
+			List<SocketSessionServerSide> rmList = new List<SocketSessionServerSide>();
 			Log.Debug("Checking for expired/inactive sessions");
             foreach (var session in sessions)
             {
@@ -129,7 +183,7 @@ namespace SemesterProject.NetworkCommunication
 					rmList.Add(session);
 				}
             }
-			Log.Debug("Found for expired/inactive sessions: {0}", rmList.Count);
+			Log.Debug("Found expired/inactive sessions: {0}", rmList.Count);
 
 			Log.Debug("Removing expired/inactive sessions");
 			foreach (var session in rmList)

@@ -11,33 +11,34 @@ using SemesterProject.Common.Core;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
+using System.Net;
 using Serilog;
 
 namespace SemesterProject.NetworkCommunication
 {
-	class ClientSessionServerSide: IDisposable
+	class SocketSessionServerSide: IDisposable
 	{
-		const int bufferSize = 1024;
-		Socket _client;
-		NetworkStream _clientStream;
+		Socket client;
+		NetworkStream clientStream;
 
-		CancellationTokenSource cancellation;
+		CancellationTokenSource canceller;
 		Task worker;
+
 		
-		Aes _crypto;
+		Aes crypto;
 
 		public bool IsCompleted { get => worker.IsCompleted; }
 
 		Queue<Dictionary<int, int>> allowedKeyTableQueue;
 
-		public ClientSessionServerSide(Socket client, Aes aes)
+		public SocketSessionServerSide(Socket client, Aes aes)
 		{
-			_client = client;
-			_clientStream = new NetworkStream(_client);
+			this.client = client;
+            clientStream = new NetworkStream(this.client);
 			allowedKeyTableQueue = new Queue<Dictionary<int, int>>();
-			_crypto = aes;
+			crypto = aes;
 
-			cancellation = new CancellationTokenSource();
+			canceller = new CancellationTokenSource();
 
 			worker = Task.Run( () =>
 			{
@@ -45,7 +46,7 @@ namespace SemesterProject.NetworkCommunication
 				{
 					for (; ; )
 					{
-						cancellation.Token.ThrowIfCancellationRequested();
+						canceller.Token.ThrowIfCancellationRequested();
 						this.update();
 					}
 				}
@@ -57,9 +58,9 @@ namespace SemesterProject.NetworkCommunication
 				{
 					Log.Error(ex, "Unknown error");
 				}
-			}, cancellation.Token);
+			}, canceller.Token);
 		}
-		~ClientSessionServerSide()
+		~SocketSessionServerSide()
 		{
 			this.Dispose();
 		}
@@ -70,34 +71,40 @@ namespace SemesterProject.NetworkCommunication
 			try
 			{
 				Log.Debug("Stopping worker: {0}", this.GetType().Name);
-				cancellation?.Cancel();
+				canceller?.Cancel();
 				if (!worker.IsCompleted)
 					worker?.Wait();
 				Log.Debug("Stopped worker: {0}", this.GetType().Name);
 
 
 				worker?.Dispose();
-				cancellation?.Dispose();
+				canceller?.Dispose();
 
-				_clientStream?.Dispose();
-				_client?.Dispose();
+				clientStream?.Dispose();
+				client?.Dispose();
 			}
 			catch (Exception ex)
 			{
 				Log.Error(ex, "Unkown error");
 			}
 		}
+		public void EnqueueAllowedTable(Dictionary<int, int> table)
+		{
+			allowedKeyTableQueue.Enqueue(table);
+		}
+
+		
 
 		void update()
 		{
 			try
 			{
-				if (_client.Available != 0)
+				if (client.Available != 0)
 				{
 					SerialStatusData data;
 
-					using (var decryptor = _crypto.CreateDecryptor())
-					using (var cryptoStr = new CryptoStream(_clientStream, decryptor, CryptoStreamMode.Read))
+					using (var decryptor = crypto.CreateDecryptor())
+					using (var cryptoStr = new CryptoStream(clientStream, decryptor, CryptoStreamMode.Read))
 					{
 						BinaryFormatter binaryFormatter = new BinaryFormatter();
 						data = binaryFormatter?.Deserialize(cryptoStr) as SerialStatusData;
@@ -107,8 +114,8 @@ namespace SemesterProject.NetworkCommunication
 
 				if (allowedKeyTableQueue.Count != 0)
 				{
-					using (var encryptor = _crypto.CreateEncryptor())
-					using (var cryptoStr = new CryptoStream(_clientStream, encryptor, CryptoStreamMode.Read))
+					using (var encryptor = crypto.CreateEncryptor())
+					using (var cryptoStr = new CryptoStream(clientStream, encryptor, CryptoStreamMode.Read))
 					{
 						BinaryFormatter binaryFormatter = new BinaryFormatter();
 						binaryFormatter.Serialize(cryptoStr, allowedKeyTableQueue.Dequeue());
@@ -117,15 +124,15 @@ namespace SemesterProject.NetworkCommunication
 			}
 			catch (ArgumentException ex)
 			{
-				Log.Error(ex, "Network communiction failed: {0}", _client);
+				Log.Error(ex, "Network communiction failed: {0}", client);
 			}
 			catch (SerializationException ex)
 			{
-				Log.Error(ex, "Network communiction failed: {0}", _client);
+				Log.Error(ex, "Network communiction failed: {0}", client);
 			}
 			catch (SecurityException ex)
 			{
-				Log.Error(ex, "Network communiction failed: {0}", _client);
+				Log.Error(ex, "Network communiction failed: {0}", client);
 			}
 
 		}
