@@ -7,9 +7,11 @@ namespace SemesterProject.NetworkCommunication
 	[Serializable]
 	public class NetworkMessage
 	{
-		public enum MessageType { UpdateAccessTable, Breach, KeypadPress, AuthSuccess, AuthFailure, AuthTimeout, Other }
+		public enum MessageType { UpdateAccessTable, UpdateUnitTime, RequestAccessTable, Breach, KeypadPress, AuthSuccess, AuthFailure, AuthTimeout, Other }
 		public MessageType Type;
+		public DateTime MessageTimestamp;
 		public int UnitNumber;
+		public DateTime UnitTimestamp;
 		public object MessageObject;
 	}
 }
