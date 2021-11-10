@@ -132,34 +132,34 @@
 							parserData.Clear();
 							break;
 						case StateFlag.FieldA:
-							parserData.fields[0] += data;
+							parserData.Fields[0] += data;
 							break;
 						case StateFlag.FieldB:
-							parserData.fields[1] += data;
+							parserData.Fields[1] += data;
 							break;
 						case StateFlag.FieldC:
-							parserData.fields[2] += data;
+							parserData.Fields[2] += data;
 							break;
 						case StateFlag.FieldD:
-							parserData.fields[3] += data;
+							parserData.Fields[3] += data;
 							break;
 						case StateFlag.FieldE:
-							parserData.fields[4] += data;
+							parserData.Fields[4] += data;
 							break;
 						case StateFlag.FieldF:
-							parserData.fields[5] += data;
+							parserData.Fields[5] += data;
 							break;
 						case StateFlag.FieldG:
-							parserData.fields[6] += data;
+							parserData.Fields[6] += data;
 							break;
 						case StateFlag.FieldH:
-							parserData.fields[7] += data;
+							parserData.Fields[7] += data;
 							break;
 						case StateFlag.FieldI:
-							parserData.fields[8] += data;
+							parserData.Fields[8] += data;
 							break;
 						case StateFlag.FieldJ:
-							parserData.fields[9] += data;
+							parserData.Fields[9] += data;
 							break;
 						default:
 							break;

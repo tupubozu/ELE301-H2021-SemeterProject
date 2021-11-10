@@ -11,6 +11,7 @@ namespace SemesterProject.Kortleser.CLI
 {
 	class Program
 	{
+		static SocketClientSession clientSession;
 		static async Task Main(string[] args)
 		{
 			ProgramCore.SetupLoging();
@@ -71,7 +72,7 @@ namespace SemesterProject.Kortleser.CLI
 
 			Aes aes = AesSecret.GetAes();
 
-			SocketClientSession socketSession = new SocketClientSession(aes);
+			clientSession = new SocketClientSession(aes);
 
 			Console.CancelKeyPress += ProgramCore.Console_CancelKeyPress;
 
@@ -87,6 +88,20 @@ namespace SemesterProject.Kortleser.CLI
 		{
 			Log.Information("Serial status data recieved from node {0}",e.StatusData.NodeNumber);
 			Console.WriteLine(e.StatusData);
+			NetworkMessage data = new NetworkMessage()
+			{
+				MessageTimestamp = DateTime.Now,
+				UnitTimestamp = e.StatusData.Timestamp,
+				UnitNumber = e.StatusData.NodeNumber,
+				Type = NetworkMessage.MessageType.Other,
+				MessageObject = null
+			};
+
+            try
+            {
+				clientSession?.EnqueueNetworkData(data);
+			}
+			catch (Exception) { }
 		}
 	}
 }

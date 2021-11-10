@@ -7,6 +7,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Serilog;
+using System.IO;
 using SemesterProject.Common.Core;
 using SemesterProject.Common.Values;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -17,12 +18,14 @@ namespace SemesterProject.NetworkCommunication
 {
 	public class SocketClientSession : IDisposable
 	{
-		Queue<NetworkMessage> statusDataQueue = new Queue<NetworkMessage>();
+		Queue<NetworkMessage> messageQueue = new Queue<NetworkMessage>();
 		public Dictionary<int, int> AllowedKeyTable = new Dictionary<int, int>();
 
 		Aes crypto;
 		Socket server;
 		NetworkStream serverStream;
+		CryptoStream cryptoWriter;
+		CryptoStream cryptoReader;
 
 		UdpClient broadcastInterceptor;
 		CancellationTokenSource broadcastCanceller;
@@ -35,50 +38,56 @@ namespace SemesterProject.NetworkCommunication
 
 
 		public SocketClientSession(Aes aes)
-		{
-			init();
+        {
+            init();
 
-			crypto= aes;
+            crypto = aes;
 
-			server = null;
+            server = null;
 
-			try
-			{
-				broadcastInterceptor = new UdpClient(CommonValues.UdpBroadcastPort);
-			}
-			catch (SocketException ex)
-			{
-				Log.Debug(ex, "Failed to bind UdpClient to port {0}", CommonValues.UdpBroadcastPort);
-				broadcastInterceptor = null;
-			}
+            initBroadcast();
 
-			Log.Information("Starting broadcast listener on {0}", broadcastInterceptor.Client.LocalEndPoint);
-			broadcastListener = Task.Run(() =>
-			{
-				try
-				{
-					for (; ; ) 
-					{
-						broadcastCanceller.Token.ThrowIfCancellationRequested();
-						broadcastUpdate();
-						if (broadcastInterceptor is null) break; 
-					}
-				}
-				catch (OperationCanceledException ex)
-				{
-					Log.Debug(ex, "Broadcast listener stopped");
-				}
-				catch (Exception ex) 
-				{
-					Log.Error(ex, "Unknown error");
-				}
+        }
+
+        void initBroadcast()
+        {
+            try
+            {
+                broadcastInterceptor = new UdpClient(CommonValues.UdpBroadcastPort);
+            }
+            catch (SocketException ex)
+            {
+                Log.Debug(ex, "Failed to bind UdpClient to port {0}", CommonValues.UdpBroadcastPort);
+                broadcastInterceptor = null;
+            }
+
+            Log.Information("Starting broadcast listener on {0}", broadcastInterceptor.Client.LocalEndPoint);
+            broadcastListener = Task.Run(() =>
+            {
+                try
+                {
+                    for (; ; )
+                    {
+                        broadcastCanceller.Token.ThrowIfCancellationRequested();
+                        broadcastUpdate();
+                        if (broadcastInterceptor is null) break;
+                    }
+                }
+                catch (OperationCanceledException ex)
+                {
+                    Log.Debug(ex, "Broadcast listener stopped externally");
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Unknown error");
+                }
+				Log.Debug("Broadcast listener stopped");
 
 			}, broadcastCanceller.Token);
-			Log.Information("Started broadcast listener on {0}", broadcastInterceptor.Client.LocalEndPoint);
+            Log.Information("Started broadcast listener on {0}", broadcastInterceptor.Client.LocalEndPoint);
+        }
 
-
-		}
-		public SocketClientSession(IPEndPoint serverEnd,Aes aes)
+        public SocketClientSession(IPEndPoint serverEnd,Aes aes)
 		{
 			init();
 			broadcastInterceptor = null;
@@ -86,7 +95,9 @@ namespace SemesterProject.NetworkCommunication
 			server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 			server.Connect(serverEnd);
 			serverStream = new NetworkStream(server);
-			worker = work();
+			cryptoReader = new CryptoStream(serverStream, crypto.CreateDecryptor(), CryptoStreamMode.Read);
+			cryptoWriter = new CryptoStream(serverStream, crypto.CreateEncryptor(), CryptoStreamMode.Write);
+			worker = createWorker();
 		}
 		~SocketClientSession()
 		{
@@ -138,18 +149,29 @@ namespace SemesterProject.NetworkCommunication
 						IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Any, 0);
 						
 						byte[] temp = broadcastInterceptor.Receive(ref serverEndPoint);
-						ushort ctrl = BitConverter.ToUInt16(temp, 0);
+						ushort ctrl;	
+						if (temp.Length == 2)
+                        {
+							ctrl = (ushort)((temp[0]<<8) | temp[1]);
+						}
+						else
+                        {
+							ctrl = BitConverter.ToUInt16(temp, 0);
+						}
+
 						if (ctrl == CommonValues.BroadcastValidatorValue)
 						{
 							Log.Information("Found server on {0}", serverEndPoint.Address);
-							serverEndPoint.Port = 1337;
+							serverEndPoint.Port = CommonValues.TcpServerPort;
 
 							Log.Information("Connecting to server on {0}", serverEndPoint);
 							server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 							server.Connect(serverEndPoint);
 							Log.Information("Connected to server on {0}", serverEndPoint);
-							serverStream = new NetworkStream(server);
-							worker = work();
+							serverStream = new NetworkStream(server, FileAccess.ReadWrite);
+							cryptoReader = new CryptoStream(serverStream, crypto.CreateDecryptor(), CryptoStreamMode.Read);
+							cryptoWriter = new CryptoStream(serverStream, crypto.CreateEncryptor(), CryptoStreamMode.Write);
+							worker = createWorker();
 						}
 					}
 				}
@@ -168,7 +190,7 @@ namespace SemesterProject.NetworkCommunication
 				Log.Error(ex, "Unknown error");
 			}
 		}
-		Task work()
+		Task createWorker()
 		{
 			Task job = Task.Run(() =>
 			{
@@ -177,12 +199,21 @@ namespace SemesterProject.NetworkCommunication
 					for (; ; )
 					{
 						canceller.Token.ThrowIfCancellationRequested();
-						this.update();
+						this.updateWorker();
 					}
 				}
 				catch (OperationCanceledException ex)
 				{
 					Log.Information(ex, "Worker thread aborted");
+				}
+				catch (IOException ex)
+                {
+					Log.Error(ex, "Stream error");
+                    
+					server.Dispose();
+					
+					server = null;
+					initBroadcast();
 				}
 				catch (Exception ex)
 				{
@@ -192,38 +223,44 @@ namespace SemesterProject.NetworkCommunication
 			return job;
 		}
 
-		public void EnqueueStatusData(NetworkMessage data)
+		public void EnqueueNetworkData(NetworkMessage data)
 		{
-			statusDataQueue.Enqueue(data);
+			messageQueue.Enqueue(data);
 		}
 
-		void update()
+		void updateWorker()
 		{
 			try
 			{
-				if (server.Available != 0)
+				if (server.Available != 0 && !(cryptoReader is null))
 				{
-					Dictionary<int, int> data;
+					NetworkMessage data = null;
 					//SerialStatusData data;
-					
-					using (var decryptor = crypto.CreateDecryptor())
-					using (var cryptoStr = new CryptoStream(serverStream, decryptor, CryptoStreamMode.Read))
-					{
-						BinaryFormatter binaryFormatter = new BinaryFormatter();
-						data = binaryFormatter.Deserialize(cryptoStr) as Dictionary<int, int>;
-					}
+					BinaryFormatter binaryFormatter = new BinaryFormatter();
+					data = binaryFormatter.Deserialize(cryptoReader) as NetworkMessage;
 
+					if (!(data is null))
+					{
+						Log.Information("Network message received from node: ", data.UnitNumber);
+						switch (data.Type)
+						{
+							case NetworkMessage.MessageType.UpdateAccessTable:
+								AllowedKeyTable = data.MessageObject as Dictionary<int, int> ?? AllowedKeyTable;
+								break;
+							case NetworkMessage.MessageType.UpdateUnitTime:
+								break;
+							default:
+								break;
+						}
+					}
 				}
 
-				if (statusDataQueue.Count != 0)
+				if (messageQueue.Count != 0 && !(cryptoWriter is null))
 				{
-					using (var encryptor = crypto.CreateEncryptor())
-					using (var cryptoStr = new CryptoStream(serverStream, encryptor, CryptoStreamMode.Read))
-					{
-						BinaryFormatter binaryFormatter = new BinaryFormatter();
-						binaryFormatter.Serialize(cryptoStr, statusDataQueue.Dequeue());
-					}
+					BinaryFormatter binaryFormatter = new BinaryFormatter();
+					binaryFormatter.Serialize(cryptoWriter, messageQueue.Dequeue());
 				}
+
 			}
 			catch (ArgumentException ex)
 			{

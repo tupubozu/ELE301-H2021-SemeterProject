@@ -25,10 +25,12 @@ namespace SemesterProject.NetworkCommunication
 		CancellationTokenSource broadcastCanceller;
 		Task broadcaster;
 
+		DateTime lastSessionCheck;
+		TimeSpan sessionCheckInterval;
 		public SocketServer(Aes aes)
 		{
 			Socket listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-			IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Any, 1337);
+			IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Any, CommonValues.TcpServerPort);
 			listener.Bind(serverEndPoint);
 			
 			init(listener, aes);
@@ -42,6 +44,8 @@ namespace SemesterProject.NetworkCommunication
 
 		private void init(Socket listener, Aes aes)
 		{
+			lastSessionCheck = DateTime.Now;
+			sessionCheckInterval = TimeSpan.FromSeconds(30);
 			Log.Information("Starting server on {0}", listener.LocalEndPoint);
 			crypto = aes;
 			this.listener = listener;
@@ -173,24 +177,33 @@ namespace SemesterProject.NetworkCommunication
 				await task;
 			}
 
-			List<SocketServerSession> rmList = new List<SocketServerSession>();
-			Log.Debug("Checking for expired/inactive sessions");
-			foreach (var session in sessions)
+			DateTime currentTime = DateTime.Now;
+			if (sessions.Count != 0 && currentTime - lastSessionCheck >= sessionCheckInterval)
 			{
-				if (session.IsCompleted)
+				lastSessionCheck = currentTime;
+				List<SocketServerSession> rmList = new List<SocketServerSession>();
+				Log.Debug("Checking for expired/inactive sessions");
+				foreach (var session in sessions)
 				{
-					rmList.Add(session);
+					if (session.IsCompleted)
+					{
+						rmList.Add(session);
+					}
 				}
-			}
-			Log.Debug("Found expired/inactive sessions: {0}", rmList.Count);
+				Log.Debug("Found expired/inactive sessions: {0}", rmList.Count);
 
-			Log.Debug("Removing expired/inactive sessions");
-			foreach (var session in rmList)
-			{
-				session.Dispose();
-				sessions.Remove(session);
+				Log.Debug("Removing expired/inactive sessions");
+				foreach (var session in rmList)
+				{
+					try
+					{
+						session.Dispose();
+					}
+					catch (Exception){ }
+					sessions.Remove(session);
+				}
+				Log.Debug("Removed expired/inactive sessions");
 			}
-			Log.Debug("Removed expired/inactive sessions");
 
 		}
 	}

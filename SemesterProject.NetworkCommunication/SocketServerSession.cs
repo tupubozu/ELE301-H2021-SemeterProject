@@ -20,6 +20,8 @@ namespace SemesterProject.NetworkCommunication
 	{
 		Socket client;
 		NetworkStream clientStream;
+		CryptoStream cryptoWriter;
+		CryptoStream cryptoReader;
 
 		CancellationTokenSource canceller;
 		Task worker;
@@ -29,14 +31,18 @@ namespace SemesterProject.NetworkCommunication
 
 		public bool IsCompleted { get => worker.IsCompleted; }
 
-		Queue<Dictionary<int, int>> allowedKeyTableQueue;
+		Queue<NetworkMessage> messageQueue;
 
 		public SocketServerSession(Socket client, Aes aes)
 		{
+			client.Blocking = true;
 			this.client = client;
-			clientStream = new NetworkStream(this.client);
-			allowedKeyTableQueue = new Queue<Dictionary<int, int>>();
 			crypto = aes;
+			clientStream = new NetworkStream(this.client, FileAccess.ReadWrite);
+			cryptoReader = new CryptoStream(clientStream, crypto.CreateDecryptor(), CryptoStreamMode.Read);
+			cryptoWriter = new CryptoStream(clientStream, crypto.CreateEncryptor(), CryptoStreamMode.Write);
+			messageQueue = new Queue<NetworkMessage>();
+
 
 			canceller = new CancellationTokenSource();
 
@@ -54,6 +60,11 @@ namespace SemesterProject.NetworkCommunication
 				{
 					Log.Information(ex, "Worker thread aborted");
 				}
+				catch (IOException ex)
+                {
+					Log.Error(ex, "Stream error");
+					canceller.Cancel();
+                }
 				catch (Exception ex)
 				{
 					Log.Error(ex, "Unknown error");
@@ -72,7 +83,7 @@ namespace SemesterProject.NetworkCommunication
 			{
 				Log.Debug("Stopping worker: {0}", this.GetType().Name);
 				canceller?.Cancel();
-				if (!worker.IsCompleted)
+				if (!(worker is null) || !worker.IsCompleted)
 					worker?.Wait();
 				Log.Debug("Stopped worker: {0}", this.GetType().Name);
 
@@ -88,9 +99,9 @@ namespace SemesterProject.NetworkCommunication
 				Log.Error(ex, "Unkown error");
 			}
 		}
-		public void EnqueueAllowedTable(Dictionary<int, int> table)
+		public void EnqueueNetworkData(NetworkMessage data)
 		{
-			allowedKeyTableQueue.Enqueue(table);
+			messageQueue.Enqueue(data);
 		}
 
 		
@@ -99,27 +110,20 @@ namespace SemesterProject.NetworkCommunication
 		{
 			try
 			{
-				if (client.Available != 0)
+				if (client.Available != 0 && !(cryptoReader is null))
 				{
-					NetworkMessage data;
-
-					using (var decryptor = crypto.CreateDecryptor())
-					using (var cryptoStr = new CryptoStream(clientStream, decryptor, CryptoStreamMode.Read))
-					{
-						BinaryFormatter binaryFormatter = new BinaryFormatter();
-						data = binaryFormatter?.Deserialize(cryptoStr) as NetworkMessage;
-					}
-
+					NetworkMessage data = null;
+					BinaryFormatter binaryFormatter = new BinaryFormatter();
+					data = binaryFormatter?.Deserialize(cryptoReader) as NetworkMessage;
+					if (!(data is null))
+                    {
+						Log.Information("Network message recieved from node: {0}", data.UnitNumber);
+                    }
 				}
-
-				if (allowedKeyTableQueue.Count != 0)
+				if (messageQueue.Count != 0 && !(cryptoWriter is null))
 				{
-					using (var encryptor = crypto.CreateEncryptor())
-					using (var cryptoStr = new CryptoStream(clientStream, encryptor, CryptoStreamMode.Read))
-					{
-						BinaryFormatter binaryFormatter = new BinaryFormatter();
-						binaryFormatter.Serialize(cryptoStr, allowedKeyTableQueue.Dequeue());
-					}
+					BinaryFormatter binaryFormatter = new BinaryFormatter();
+					binaryFormatter.Serialize(cryptoWriter, messageQueue.Dequeue());
 				}
 			}
 			catch (ArgumentException ex)
