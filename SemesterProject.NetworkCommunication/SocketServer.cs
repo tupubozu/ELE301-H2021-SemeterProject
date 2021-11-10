@@ -91,7 +91,7 @@ namespace SemesterProject.NetworkCommunication
 			broadcastEndPoint = new IPEndPoint(IPAddress.Broadcast, 9001);
 			broadcastCanceller = new CancellationTokenSource();
 
-			broadcast = new UdpClient(9001);
+			broadcast = new UdpClient(69000);
 			broadcast.Connect(broadcastEndPoint);
 
 			Log.Information("Starting broadcaster on {0}", broadcast.Client.LocalEndPoint);
