@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SemesterProject.Kortleser.C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SemesterProject.NetworkCommunication", "SemesterProject.NetworkCommunication\SemesterProject.NetworkCommunication.csproj", "{CA7B810A-2A2C-4EAD-80E5-9921130434FE}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SemesterProject.Common.Core", "SemesterProject.Common.Core\SemesterProject.Common.Core.csproj", "{13D26D3C-6670-4C7E-8803-89B830AFEE1D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SemesterProject.Common", "SemesterProject.Common.Core\SemesterProject.Common.csproj", "{13D26D3C-6670-4C7E-8803-89B830AFEE1D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SemesterProject.Sentral.CLI", "SemesterProject.Sentral.CLI\SemesterProject.Sentral.CLI.csproj", "{F993BBBD-7245-493D-B6B9-53958531FE96}"
 	ProjectSection(ProjectDependencies) = postProject

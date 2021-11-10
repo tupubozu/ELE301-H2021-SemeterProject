@@ -1,5 +1,4 @@
 ﻿using System;
-using SemesterProject.Common.Core;
 
 namespace SemesterProject.SerialCommunication
 {

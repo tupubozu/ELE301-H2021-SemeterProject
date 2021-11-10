@@ -6,20 +6,19 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
 using Serilog;
+using SemesterProject.Common.Values;
 
 namespace SemesterProject.NetworkCommunication
 {
 	public class SocketServer: IDisposable
 	{
-		const ushort validator = 1999;
-
-		Socket _listener;
+		Socket listener;
 		List<SocketSessionServerSide> sessions;
 
 		CancellationTokenSource cancellation;
 		Task worker;
 		
-		Aes _crypto;
+		Aes crypto;
 
 		UdpClient broadcast;
 		IPEndPoint broadcastEndPoint;
@@ -44,10 +43,10 @@ namespace SemesterProject.NetworkCommunication
 		private void init(Socket listener, Aes aes)
 		{
 			Log.Information("Starting server on {0}", listener.LocalEndPoint);
-			_crypto = aes;
-			_listener = listener;
-			_listener.Blocking = false;
-			_listener.Listen(1000);
+			crypto = aes;
+			this.listener = listener;
+			this.listener.Blocking = false;
+			this.listener.Listen(1000);
 			sessions = new List<SocketSessionServerSide>();
 			cancellation = new CancellationTokenSource();
 
@@ -79,7 +78,7 @@ namespace SemesterProject.NetworkCommunication
 		async Task broadcastUpdate()
 		{
 			Task timeDelay = Task.Delay(5000);
-			byte[] buffer = { (validator & (0xff << 8)) >> 8, validator & 0xff };
+			byte[] buffer = { (CommonValues.BroadcastValidatorValue & (0xff << 8)) >> 8, CommonValues.BroadcastValidatorValue & 0xff };
 			broadcast.Send(buffer,2);
 			Log.Debug("Broadcast sendt");
 			await timeDelay;
@@ -88,10 +87,10 @@ namespace SemesterProject.NetworkCommunication
 
 		void initBroadcast()
 		{
-			broadcastEndPoint = new IPEndPoint(IPAddress.Broadcast, 9001);
+			broadcastEndPoint = new IPEndPoint(IPAddress.Broadcast, CommonValues.UdpBroadcastPort);
 			broadcastCanceller = new CancellationTokenSource();
 
-			broadcast = new UdpClient(42069);
+			broadcast = new UdpClient(CommonValues.UdpBroadcastHostPort);
 			broadcast.Connect(broadcastEndPoint);
 
 			Log.Information("Starting broadcaster on {0}", broadcast.Client.LocalEndPoint);
@@ -146,7 +145,7 @@ namespace SemesterProject.NetworkCommunication
 				cancellation?.Dispose();
 
 				foreach (var session in sessions) session?.Dispose();
-				_listener?.Dispose();
+				listener?.Dispose();
 			}
 			catch (Exception ex)
 			{
@@ -156,16 +155,16 @@ namespace SemesterProject.NetworkCommunication
 
 		public override string ToString()
 		{
-			return $"{base.GetType().Name}({_listener})";
+			return $"{base.GetType().Name}({listener})";
 		}
 
 		async Task update()
 		{
 			try
 			{
-				var client = _listener.Accept();
+				var client = listener.Accept();
 				Log.Information($"New connection from {client.RemoteEndPoint}");
-				sessions.Add(new SocketSessionServerSide(client, _crypto));
+				sessions.Add(new SocketSessionServerSide(client, crypto));
 			}
 			catch (SocketException ex)
 			{

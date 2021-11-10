@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SemesterProject.Common.Core
+namespace SemesterProject.SerialCommunication
 {
 	public class SerialStatusData
 	{

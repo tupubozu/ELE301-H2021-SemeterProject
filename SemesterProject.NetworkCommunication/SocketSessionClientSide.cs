@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Serilog;
 using SemesterProject.Common.Core;
+using SemesterProject.Common.Values;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Runtime.Serialization;
 using System.Security;
@@ -16,9 +17,7 @@ namespace SemesterProject.NetworkCommunication
 {
     public class SocketSessionClientSide : IDisposable
     {
-        const ushort validator = 1999;
-        const int listenPort = 9001;
-        Queue<SerialStatusData> statusDataQueue = new Queue<SerialStatusData>();
+        Queue<NetworkMessage> statusDataQueue = new Queue<NetworkMessage>();
         public Dictionary<int, int> AllowedKeyTable = new Dictionary<int, int>();
 
         Aes crypto;
@@ -45,11 +44,11 @@ namespace SemesterProject.NetworkCommunication
 
             try
             {
-                broadcastInterceptor = new UdpClient(listenPort);
+                broadcastInterceptor = new UdpClient(CommonValues.UdpBroadcastPort);
             }
             catch (SocketException ex)
             {
-                Log.Debug(ex, "Failed to bind UdpClient to port {0}", listenPort);
+                Log.Debug(ex, "Failed to bind UdpClient to port {0}", CommonValues.UdpBroadcastPort);
                 broadcastInterceptor = null;
             }
 
@@ -140,7 +139,7 @@ namespace SemesterProject.NetworkCommunication
                         
                         byte[] temp = broadcastInterceptor.Receive(ref serverEndPoint);
                         ushort ctrl = BitConverter.ToUInt16(temp, 0);
-                        if (ctrl == validator)
+                        if (ctrl == CommonValues.BroadcastValidatorValue)
                         {
                             Log.Information("Found server on {0}", serverEndPoint.Address);
                             serverEndPoint.Port = 1337;
@@ -193,7 +192,7 @@ namespace SemesterProject.NetworkCommunication
             return job;
         }
 
-        public void EnqueueStatusData(SerialStatusData data)
+        public void EnqueueStatusData(NetworkMessage data)
         {
             statusDataQueue.Enqueue(data);
         }

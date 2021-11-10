@@ -101,13 +101,13 @@ namespace SemesterProject.NetworkCommunication
 			{
 				if (client.Available != 0)
 				{
-					SerialStatusData data;
+					NetworkMessage data;
 
 					using (var decryptor = crypto.CreateDecryptor())
 					using (var cryptoStr = new CryptoStream(clientStream, decryptor, CryptoStreamMode.Read))
 					{
 						BinaryFormatter binaryFormatter = new BinaryFormatter();
-						data = binaryFormatter?.Deserialize(cryptoStr) as SerialStatusData;
+						data = binaryFormatter?.Deserialize(cryptoStr) as NetworkMessage;
 					}
 
 				}
