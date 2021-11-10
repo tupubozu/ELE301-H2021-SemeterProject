@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace SemesterProject.Common.Core
 {
-    public static class ProgramCore
-    {
+	public static class ProgramCore
+	{
 		static bool programStopFlag = false;
 		static object syncObject =  new object();
 		public static void SetupLoging()

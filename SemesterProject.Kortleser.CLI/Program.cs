@@ -71,7 +71,7 @@ namespace SemesterProject.Kortleser.CLI
 
 			Aes aes = AesSecret.GetAes();
 
-			SocketSessionClientSide socketSession = new SocketSessionClientSide(aes);
+			SocketClientSession socketSession = new SocketClientSession(aes);
 
 			Console.CancelKeyPress += ProgramCore.Console_CancelKeyPress;
 

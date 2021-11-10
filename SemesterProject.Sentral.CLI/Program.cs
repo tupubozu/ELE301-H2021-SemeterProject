@@ -71,9 +71,9 @@ namespace SemesterProject.Sentral.CLI
 					Log.Information("Secrets file created");
 				}
 				catch(Exception ex)
-                {
+				{
 					Log.Error(ex, "Secrets creation failed");
-                }
+				}
 			}
 			else
 			{

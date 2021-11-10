@@ -13,7 +13,7 @@ namespace SemesterProject.NetworkCommunication
 	public class SocketServer: IDisposable
 	{
 		Socket listener;
-		List<SocketSessionServerSide> sessions;
+		List<SocketServerSession> sessions;
 
 		CancellationTokenSource cancellation;
 		Task worker;
@@ -47,7 +47,7 @@ namespace SemesterProject.NetworkCommunication
 			this.listener = listener;
 			this.listener.Blocking = false;
 			this.listener.Listen(1000);
-			sessions = new List<SocketSessionServerSide>();
+			sessions = new List<SocketServerSession>();
 			cancellation = new CancellationTokenSource();
 
 			worker = Task.Run(async () =>
@@ -164,7 +164,7 @@ namespace SemesterProject.NetworkCommunication
 			{
 				var client = listener.Accept();
 				Log.Information($"New connection from {client.RemoteEndPoint}");
-				sessions.Add(new SocketSessionServerSide(client, crypto));
+				sessions.Add(new SocketServerSession(client, crypto));
 			}
 			catch (SocketException ex)
 			{
@@ -173,23 +173,23 @@ namespace SemesterProject.NetworkCommunication
 				await task;
 			}
 
-			List<SocketSessionServerSide> rmList = new List<SocketSessionServerSide>();
+			List<SocketServerSession> rmList = new List<SocketServerSession>();
 			Log.Debug("Checking for expired/inactive sessions");
-            foreach (var session in sessions)
-            {
+			foreach (var session in sessions)
+			{
 				if (session.IsCompleted)
 				{
 					rmList.Add(session);
 				}
-            }
+			}
 			Log.Debug("Found expired/inactive sessions: {0}", rmList.Count);
 
 			Log.Debug("Removing expired/inactive sessions");
 			foreach (var session in rmList)
-            {
+			{
 				session.Dispose();
 				sessions.Remove(session);
-            }
+			}
 			Log.Debug("Removed expired/inactive sessions");
 
 		}

@@ -45,7 +45,7 @@ namespace SemesterProject.Common.Core
 					}
 				}
 				catch (Exception ex)
-                {
+				{
 					Log.Error(ex, "Secrets creation failed");
 
 				}
@@ -84,7 +84,7 @@ namespace SemesterProject.Common.Core
 		}
 
 		public static Aes GetAes()
-        {
+		{
 			Aes aes = Aes.Create();
 			aes.Mode = CipherMode.CFB;
 			aes.Padding = PaddingMode.ISO10126;

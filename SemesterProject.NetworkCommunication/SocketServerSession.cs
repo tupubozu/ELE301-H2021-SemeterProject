@@ -16,7 +16,7 @@ using Serilog;
 
 namespace SemesterProject.NetworkCommunication
 {
-	class SocketSessionServerSide: IDisposable
+	class SocketServerSession: IDisposable
 	{
 		Socket client;
 		NetworkStream clientStream;
@@ -31,10 +31,10 @@ namespace SemesterProject.NetworkCommunication
 
 		Queue<Dictionary<int, int>> allowedKeyTableQueue;
 
-		public SocketSessionServerSide(Socket client, Aes aes)
+		public SocketServerSession(Socket client, Aes aes)
 		{
 			this.client = client;
-            clientStream = new NetworkStream(this.client);
+			clientStream = new NetworkStream(this.client);
 			allowedKeyTableQueue = new Queue<Dictionary<int, int>>();
 			crypto = aes;
 
@@ -60,7 +60,7 @@ namespace SemesterProject.NetworkCommunication
 				}
 			}, canceller.Token);
 		}
-		~SocketSessionServerSide()
+		~SocketServerSession()
 		{
 			this.Dispose();
 		}
