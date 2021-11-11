@@ -31,8 +31,10 @@
 				UpdateReaderStatus(data);
 				if (triggerParsing)
 				{
+					ParserData d = parserData;
+					parserData = new ParserData();
 					e = new SerialStatusUpdateEventArgs();
-					e.StatusData = ParserData.ParseStatusData(parserData);
+					e.StatusData = ParserData.ParseStatusData(d);
 				}
 				else
 				{
@@ -241,7 +243,7 @@
 					switch (CurrentState)
 					{
 						case StateFlag.Closed:
-							parserData.Clear();
+							//parserData.Clear();
 							break;
 						case StateFlag.FieldA:
 							parserData.Fields[0] += data;

@@ -21,7 +21,7 @@ namespace SemesterProject.SerialCommunication
 				/// <summary>
 				/// Resets the data fields to an empty state
 				/// </summary>
-				public void Clear()
+				private void Clear()
 				{
 					for (int i = 0; i < Fields.Length; i++)
 					{
