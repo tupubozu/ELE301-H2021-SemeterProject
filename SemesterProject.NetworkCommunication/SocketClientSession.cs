@@ -33,18 +33,19 @@ namespace SemesterProject.NetworkCommunication
 		private CancellationTokenSource workerCanceller;
 		private Task worker;
 
-        #region Events
-        public event EventHandler<NetworkMessageUpdateEventArgs> MessageRecieved;
+		#region Events
+		public event EventHandler<NetworkMessageUpdateEventArgs> MessageRecieved;
 		public event EventHandler<NetworkMessageUpdateEventArgs> UpdateNodeClock;
 		public event EventHandler<NetworkMessageUpdateEventArgs> UpdateAccessTable;
-        #endregion
-        public bool IsCompleted { get => worker.IsCompleted; }
+		#endregion
+		public bool IsCompleted { get => worker.IsCompleted; }
 
 		public SocketClientSession(Aes aes)
 		{
 			crypto = aes;
 			server = null;
 
+			Init();
 			InitBroadcast();
 
 		}
@@ -57,14 +58,22 @@ namespace SemesterProject.NetworkCommunication
 			serverStream = new NetworkStream(server);
 			cryptoReader = new CryptoStream(serverStream, crypto.CreateDecryptor(), CryptoStreamMode.Read);
 			cryptoWriter = new CryptoStream(serverStream, crypto.CreateEncryptor(), CryptoStreamMode.Write);
+			Init();
 			InitWorker();
 		}
+
+		private void Init()
+		{
+			broadcastCanceller = new CancellationTokenSource();
+			workerCanceller = new CancellationTokenSource();
+		}
+
 		~SocketClientSession()
 		{
 			this.Dispose();
 		}
 
-        public void Dispose()
+		public void Dispose()
 		{
 			Log.Debug("Dispose {0}", this.GetType().Name);
 			try
@@ -99,8 +108,6 @@ namespace SemesterProject.NetworkCommunication
 		#region BroadcastListener
 		private void InitBroadcast()
 		{
-			broadcastCanceller = new CancellationTokenSource();
-
 			try
 			{
 				broadcastInterceptor = new UdpClient(CommonValues.UdpBroadcastPort);
@@ -111,9 +118,9 @@ namespace SemesterProject.NetworkCommunication
 				broadcastInterceptor = null;
 			}
 
-			Log.Information("Starting broadcast listener on {0}", broadcastInterceptor.Client.LocalEndPoint);
+			Log.Information("Starting broadcast listener on {0}", broadcastInterceptor?.Client?.LocalEndPoint);
 			InitBroadcastListenerWorker();
-			Log.Information("Started broadcast listener on {0}", broadcastInterceptor.Client.LocalEndPoint);
+			Log.Information("Started broadcast listener on {0}", broadcastInterceptor?.Client?.LocalEndPoint);
 		}
 		private void InitBroadcastListenerWorker()
 		{
@@ -149,7 +156,7 @@ namespace SemesterProject.NetworkCommunication
 			{
 				if (server is null)
 				{
-					if (broadcastInterceptor.Available != 0)
+					if (broadcastInterceptor?.Available != 0)
 					{
 						IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Any, 0);
 
@@ -177,14 +184,13 @@ namespace SemesterProject.NetworkCommunication
 							cryptoReader = new CryptoStream(serverStream, crypto.CreateDecryptor(), CryptoStreamMode.Read);
 							cryptoWriter = new CryptoStream(serverStream, crypto.CreateEncryptor(), CryptoStreamMode.Write);
 							InitWorker();
-							broadcastCanceller.Cancel(); 
 						}
 					}
 					else await Task.Delay(100);
 				}
 				else
 				{
-					broadcastInterceptor.Dispose();
+					broadcastInterceptor?.Dispose();
 					broadcastInterceptor = null;
 				}
 			}
@@ -197,39 +203,42 @@ namespace SemesterProject.NetworkCommunication
 				Log.Error(ex, "Unknown error");
 			}
 		}
-        #endregion
+		#endregion
 
-        #region Worker
-        private void InitWorker()
+		#region Worker
+		private void InitWorker()
 		{
-			workerCanceller = new CancellationTokenSource();
-
 			worker = Task.Run(async () =>
 			{
 				try
 				{
 					for (; ; )
 					{
+						if (server is null) break;
 						workerCanceller.Token.ThrowIfCancellationRequested();
 						await this.UpdateWorker();
 					}
 				}
 				catch (OperationCanceledException ex)
 				{
-					Log.Information(ex, "Worker thread aborted");
+					Log.Debug(ex, "Worker thread aborted");
 				}
 				catch (IOException ex)
 				{
 					Log.Error(ex, "Stream error");
 
 					server.Dispose();
-
 					server = null;
+
 					InitBroadcast();
 				}
 				catch (Exception ex)
 				{
 					Log.Error(ex, "Unknown error");
+				}
+				finally
+				{
+					Log.Information("Worker stopped");
 				}
 			}, workerCanceller.Token);
 		}
@@ -244,18 +253,18 @@ namespace SemesterProject.NetworkCommunication
 				{
 					Active = true;
 					NetworkMessage data = null;
-                    try
-                    {
+					try
+					{
 						//SerialStatusData data;
 						BinaryFormatter binaryFormatter = new BinaryFormatter();
 						data = binaryFormatter.Deserialize(cryptoReader) as NetworkMessage;
 
 					}
 					catch(SerializationException ex)
-                    {
+					{
 						Log.Error(ex, "Serialization failed");
 						Log.Information("Network data unreadable. Try checking preshared keys on host {0}",(server.RemoteEndPoint as IPEndPoint)?.Address);
-                    }
+					}
 
 					if (!(data is null))
 					{
@@ -278,7 +287,6 @@ namespace SemesterProject.NetworkCommunication
 						}
 					}
 				}
-				
 
 				if (messageQueue.Count != 0 && !(cryptoWriter is null))
 				{
