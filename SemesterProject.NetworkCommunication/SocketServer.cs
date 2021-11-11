@@ -53,7 +53,7 @@ namespace SemesterProject.NetworkCommunication
 			{
 				Log.Debug("Stopping broadcaster: {0}", this.GetType().Name);
 				broadcastCanceller?.Cancel();
-				if (!broadcaster.IsCompleted)
+				if (!(broadcaster?.IsCompleted ?? false))
 					broadcaster?.Wait();
 				Log.Debug("Stopped broadcaster: {0}", this.GetType().Name);
 				broadcaster?.Dispose();
@@ -61,7 +61,7 @@ namespace SemesterProject.NetworkCommunication
 
 				Log.Debug("Stopping worker: {0}", this.GetType().Name);
 				cancellation?.Cancel();
-				if (!worker.IsCompleted)
+				if (!(worker?.IsCompleted ?? false))
 					worker?.Wait();
 				Log.Debug("Stopped worker: {0}", this.GetType().Name);
 				worker?.Dispose();

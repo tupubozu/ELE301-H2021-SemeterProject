@@ -70,14 +70,15 @@ namespace SemesterProject.NetworkCommunication
 			{
 				Log.Debug("Stopping worker: {0}", this.GetType().Name);
 				canceller?.Cancel();
-				if (!(worker is null) || !worker.IsCompleted)
+				if (!(worker?.IsCompleted ?? false))
 					worker?.Wait();
 				Log.Debug("Stopped worker: {0}", this.GetType().Name);
-
 
 				worker?.Dispose();
 				canceller?.Dispose();
 
+				cryptoReader?.Dispose();
+				cryptoWriter?.Dispose();
 				clientStream?.Dispose();
 				client?.Dispose();
 			}

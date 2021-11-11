@@ -30,7 +30,7 @@ namespace SemesterProject.NetworkCommunication
 		private CancellationTokenSource broadcastCanceller;
 		private Task broadcastListener;
 
-		private CancellationTokenSource canceller;
+		private CancellationTokenSource workerCanceller;
 		private Task worker;
 
         #region Events
@@ -42,8 +42,6 @@ namespace SemesterProject.NetworkCommunication
 
 		public SocketClientSession(Aes aes)
 		{
-			Init();
-
 			crypto = aes;
 			server = null;
 
@@ -52,7 +50,6 @@ namespace SemesterProject.NetworkCommunication
 		}
 		public SocketClientSession(IPEndPoint serverEnd, Aes aes)
 		{
-			Init();
 			broadcastInterceptor = null;
 			crypto = aes;
 			server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -74,19 +71,19 @@ namespace SemesterProject.NetworkCommunication
 			{
 				Log.Debug("Stopping broadcast listener: {0}", this.GetType().Name);
 				broadcastCanceller?.Cancel();
-				if (!broadcastListener.IsCompleted)
+				if (!(broadcastListener?.IsCompleted ?? false))
 					broadcastListener?.Wait();
 				Log.Debug("Stopped broadcast listener: {0}", this.GetType().Name);
 				broadcastListener?.Dispose();
 				broadcastCanceller?.Dispose();
 
 				Log.Debug("Stopping worker: {0}", this.GetType().Name);
-				canceller?.Cancel();
-				if (!worker.IsCompleted)
+				workerCanceller?.Cancel();
+				if (!(worker?.IsCompleted ?? false))
 					worker?.Wait();
 				Log.Debug("Stopped worker: {0}", this.GetType().Name);
 				worker?.Dispose();
-				canceller?.Dispose();
+				workerCanceller?.Dispose();
 
 			}
 			catch (Exception ex)
@@ -99,15 +96,11 @@ namespace SemesterProject.NetworkCommunication
 			messageQueue.Enqueue(data);
 		}
 
-		private void Init()
-		{
-			broadcastCanceller = new CancellationTokenSource();
-			canceller = new CancellationTokenSource();
-		}
-
 		#region BroadcastListener
 		private void InitBroadcast()
 		{
+			broadcastCanceller = new CancellationTokenSource();
+
 			try
 			{
 				broadcastInterceptor = new UdpClient(CommonValues.UdpBroadcastPort);
@@ -143,7 +136,10 @@ namespace SemesterProject.NetworkCommunication
 				{
 					Log.Error(ex, "Unknown error");
 				}
-				Log.Debug("Broadcast listener stopped");
+				finally
+				{
+					Log.Debug("Broadcast listener stopped");
+				}
 
 			}, broadcastCanceller.Token);
 		}
@@ -181,6 +177,7 @@ namespace SemesterProject.NetworkCommunication
 							cryptoReader = new CryptoStream(serverStream, crypto.CreateDecryptor(), CryptoStreamMode.Read);
 							cryptoWriter = new CryptoStream(serverStream, crypto.CreateEncryptor(), CryptoStreamMode.Write);
 							InitWorker();
+							broadcastCanceller.Cancel(); 
 						}
 					}
 					else await Task.Delay(100);
@@ -205,13 +202,15 @@ namespace SemesterProject.NetworkCommunication
         #region Worker
         private void InitWorker()
 		{
+			workerCanceller = new CancellationTokenSource();
+
 			worker = Task.Run(() =>
 			{
 				try
 				{
 					for (; ; )
 					{
-						canceller.Token.ThrowIfCancellationRequested();
+						workerCanceller.Token.ThrowIfCancellationRequested();
 						this.UpdateWorker();
 					}
 				}
@@ -232,7 +231,7 @@ namespace SemesterProject.NetworkCommunication
 				{
 					Log.Error(ex, "Unknown error");
 				}
-			}, canceller.Token);
+			}, workerCanceller.Token);
 		}
 
 		private async void UpdateWorker()
