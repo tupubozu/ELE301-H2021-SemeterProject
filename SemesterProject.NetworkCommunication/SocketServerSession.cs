@@ -147,7 +147,7 @@ namespace SemesterProject.NetworkCommunication
 						{
 							MessageData = data
 						};
-						Log.Information("Network message recieved from node: {0}", data.NodeNumber);
+						Log.Information("Network message recieved from node {0}: {1}", data.NodeNumber, data.Type);
 						MessageRecieved?.Invoke(this, e);
 						switch (data.Type)
 						{
