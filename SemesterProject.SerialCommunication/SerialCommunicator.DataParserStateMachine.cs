@@ -11,7 +11,6 @@
 
             public StateFlag CurrentState = StateFlag.Closed;
 			
-			private DataCollectionFlag collection = DataCollectionFlag.On;
 			private ParserData parserData;
 			private bool triggerParsing = false;
 
@@ -29,7 +28,7 @@
 			public bool Update(char data, out SerialStatusUpdateEventArgs e)
 			{
 				UpdateReaderStatus(data);
-				Serilog.Log.Debug("New parser state: {0}", CurrentState);
+				Serilog.Log.Debug("New parser state: {0}, parse: {1}", CurrentState, triggerParsing);
 
 				if (triggerParsing)
 				{
@@ -94,7 +93,10 @@
 						break;
                     case StateFlag.FieldJ:
 						if (data == '#')
+						{
 							CurrentState = StateFlag.Closed;
+							triggerParsing = true;
+						}
 						break;
                     case StateFlag.Closed:
 						if (data == '$')
