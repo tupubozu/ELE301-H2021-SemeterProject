@@ -108,7 +108,7 @@ namespace SemesterProject.SerialCommunication
 				else
 				{
 					Log.Debug("Pausing serial operations");
-					await Task.Delay(5);
+					await Task.Delay(100);
 				}
 			}
 			catch (Exception ex)

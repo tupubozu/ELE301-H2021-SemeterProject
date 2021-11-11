@@ -94,14 +94,14 @@ namespace SemesterProject.NetworkCommunication
         #region Worker
         private void InitWorker()
         {
-			worker = Task.Run(() =>
+			worker = Task.Run(async () =>
 			{
 				try
 				{
 					for (; ; )
 					{
 						canceller.Token.ThrowIfCancellationRequested();
-						this.UpdateWorker();
+						await this.UpdateWorker();
 					}
 				}
 				catch (OperationCanceledException ex)
@@ -120,15 +120,28 @@ namespace SemesterProject.NetworkCommunication
 			}, canceller.Token);
 		}
 
-		private void UpdateWorker()
+		private async Task UpdateWorker()
 		{
 			try
 			{
+				bool Active = false;
+
 				if (client.Available != 0 && !(cryptoReader is null))
 				{
+					Active = true;
+
 					NetworkMessage data = null;
-					BinaryFormatter binaryFormatter = new BinaryFormatter();
-					data = binaryFormatter?.Deserialize(cryptoReader) as NetworkMessage;
+                    try
+                    {
+						BinaryFormatter binaryFormatter = new BinaryFormatter();
+						data = binaryFormatter?.Deserialize(cryptoReader) as NetworkMessage;
+					}
+					catch (SerializationException ex)
+					{
+						Log.Error(ex, "Serialization failed");
+						Log.Information("Network data unreadable. Try checking preshared keys on host {0}", (client.RemoteEndPoint as IPEndPoint)?.Address);
+					}
+					
 					if (!(data is null))
 					{
 						NetworkMessageUpdateEventArgs e = new NetworkMessageUpdateEventArgs()
@@ -166,11 +179,15 @@ namespace SemesterProject.NetworkCommunication
 						}
 					}
 				}
+
 				if (messageQueue.Count != 0 && !(cryptoWriter is null))
 				{
+					Active = true;
 					BinaryFormatter binaryFormatter = new BinaryFormatter();
 					binaryFormatter.Serialize(cryptoWriter, messageQueue.Dequeue());
 				}
+
+				if (!Active) await Task.Delay(100);
 			}
 			catch (ArgumentException ex)
 			{

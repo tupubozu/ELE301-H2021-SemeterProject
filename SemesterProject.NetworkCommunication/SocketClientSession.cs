@@ -124,14 +124,14 @@ namespace SemesterProject.NetworkCommunication
 		}
 		private void InitBroadcastListenerWorker()
 		{
-			broadcastListener = Task.Run(() =>
+			broadcastListener = Task.Run(async () =>
 			{
 				try
 				{
 					for (; ; )
 					{
 						broadcastCanceller.Token.ThrowIfCancellationRequested();
-						BroadcastUpdate();
+						await BroadcastUpdate();
 						if (broadcastInterceptor is null) break;
 					}
 				}
@@ -147,7 +147,7 @@ namespace SemesterProject.NetworkCommunication
 
 			}, broadcastCanceller.Token);
 		}
-		private void BroadcastUpdate()
+		private async Task BroadcastUpdate()
 		{
 			try
 			{
@@ -183,6 +183,7 @@ namespace SemesterProject.NetworkCommunication
 							InitWorker();
 						}
 					}
+					else await Task.Delay(100);
 				}
 				else
 				{
@@ -234,16 +235,28 @@ namespace SemesterProject.NetworkCommunication
 			}, canceller.Token);
 		}
 
-		private void UpdateWorker()
+		private async void UpdateWorker()
 		{
 			try
 			{
+				bool Active = false;
+
 				if (server.Available != 0 && !(cryptoReader is null))
 				{
+					Active = true;
 					NetworkMessage data = null;
-					//SerialStatusData data;
-					BinaryFormatter binaryFormatter = new BinaryFormatter();
-					data = binaryFormatter.Deserialize(cryptoReader) as NetworkMessage;
+                    try
+                    {
+						//SerialStatusData data;
+						BinaryFormatter binaryFormatter = new BinaryFormatter();
+						data = binaryFormatter.Deserialize(cryptoReader) as NetworkMessage;
+
+					}
+					catch(SerializationException ex)
+                    {
+						Log.Error(ex, "Serialization failed");
+						Log.Information("Network data unreadable. Try checking preshared keys on host {0}",(server.RemoteEndPoint as IPEndPoint)?.Address);
+                    }
 
 					if (!(data is null))
 					{
@@ -266,12 +279,16 @@ namespace SemesterProject.NetworkCommunication
 						}
 					}
 				}
+				
 
 				if (messageQueue.Count != 0 && !(cryptoWriter is null))
 				{
+					Active = true;
 					BinaryFormatter binaryFormatter = new BinaryFormatter();
 					binaryFormatter.Serialize(cryptoWriter, messageQueue.Dequeue());
 				}
+
+				if (!Active) await Task.Delay(100);
 
 			}
 			catch (ArgumentException ex)
