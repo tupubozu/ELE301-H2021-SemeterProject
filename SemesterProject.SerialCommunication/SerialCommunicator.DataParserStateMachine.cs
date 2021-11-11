@@ -28,14 +28,11 @@
 			public bool Update(char data, out SerialStatusUpdateEventArgs e)
 			{
 				UpdateReaderStatus(data);
-				Serilog.Log.Debug("New parser state: {0}, parse: {1}", CurrentState, triggerParsing);
-
+				
 				if (triggerParsing)
 				{
-					ParserData d = parserData;
-					parserData = new ParserData();
 					e = new SerialStatusUpdateEventArgs();
-					e.StatusData = ParserData.ParseStatusData(d);
+					e.StatusData = ParserData.ParseStatusData(parserData);
 				}
 				else
 				{
@@ -117,7 +114,7 @@
 			/// <param name="data">Data to respond to</param>
 			private void UpdateParserData(char data)
 			{
-				if (char.IsDigit(data))
+				if (char.IsDigit(data) && CurrentState != StateFlag.Closed)
 				{
 					switch (CurrentState)
 					{
@@ -155,6 +152,7 @@
 							break;
 					}
 				}
+				else parserData.Clear();
 			}
 		}
 	}
