@@ -77,8 +77,6 @@ namespace SemesterProject.NetworkCommunication
 				worker?.Dispose();
 				canceller?.Dispose();
 
-				cryptoReader?.Dispose();
-				cryptoWriter?.Dispose();
 				clientStream?.Dispose();
 				client?.Dispose();
 			}

@@ -29,6 +29,8 @@
 			public bool Update(char data, out SerialStatusUpdateEventArgs e)
 			{
 				UpdateReaderStatus(data);
+				Serilog.Log.Debug("New parser state: {0}", CurrentState);
+
 				if (triggerParsing)
 				{
 					ParserData d = parserData;
