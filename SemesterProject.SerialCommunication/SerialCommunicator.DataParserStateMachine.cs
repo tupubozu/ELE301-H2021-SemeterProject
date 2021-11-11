@@ -114,7 +114,9 @@
 			/// <param name="data">Data to respond to</param>
 			private void UpdateParserData(char data)
 			{
-				if (char.IsDigit(data) && CurrentState != StateFlag.Closed)
+				if (CurrentState == StateFlag.Closed)
+					parserData.Clear();
+				else if (char.IsDigit(data))
 				{
 					switch (CurrentState)
 					{
@@ -152,7 +154,6 @@
 							break;
 					}
 				}
-				else parserData.Clear();
 			}
 		}
 	}
