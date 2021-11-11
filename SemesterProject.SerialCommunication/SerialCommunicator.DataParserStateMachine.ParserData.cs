@@ -37,7 +37,7 @@ namespace SemesterProject.SerialCommunication
 				public static SerialStatusData ParseStatusData(ParserData data)
 				{
 					Console.WriteLine("Length of parsed data: {0}", data.Fields.Length);
-					foreach (string s in data.Fields) Console.WriteLine(2);
+					foreach (string s in data.Fields) Console.WriteLine(s);
 
 					int offset = data.Fields[data.Fields.Length - 1] != string.Empty ? 1 : 0;
 					int date = Convert.ToInt32(data.Fields[1], 10);
