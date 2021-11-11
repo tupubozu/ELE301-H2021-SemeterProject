@@ -56,180 +56,55 @@
                 {
                     case StateFlag.FieldA:
 						if(data == 'B')
-						{
 							CurrentState = StateFlag.FieldB;
-							collection = DataCollectionFlag.Off;
-						}
 						break;
                     case StateFlag.FieldB:
 						if (data == 'C')
-						{
 							CurrentState = StateFlag.FieldC;
-							collection = DataCollectionFlag.Off;
-						}
 						break;
                     case StateFlag.FieldC:
 						if (data == 'D')
-						{
 							CurrentState = StateFlag.FieldD;
-							collection = DataCollectionFlag.Off;
-						}
 						break;
                     case StateFlag.FieldD:
 						if (data == 'E')
-						{
 							CurrentState = StateFlag.FieldE;
-							collection = DataCollectionFlag.Off;
-						}
 						break;
                     case StateFlag.FieldE:
 						if (data == 'F')
-						{
 							CurrentState = StateFlag.FieldF;
-							collection = DataCollectionFlag.Off;
-						}
 						break;
                     case StateFlag.FieldF:
 						if (data == 'G')
-						{
 							CurrentState = StateFlag.FieldG;
-							collection = DataCollectionFlag.Off;
-						}
 						break;
                     case StateFlag.FieldG:
 						if (data == 'H')
-						{
 							CurrentState = StateFlag.FieldH;
-							collection = DataCollectionFlag.Off;
-						}
 						break;
                     case StateFlag.FieldH:
 						if (data == 'I')
-						{
 							CurrentState = StateFlag.FieldI;
-							collection = DataCollectionFlag.Off;
-						}
 						break;
                     case StateFlag.FieldI:
 						if (data == 'J')
-						{
 							CurrentState = StateFlag.FieldJ;
-							collection = DataCollectionFlag.Off;
-						}
 						break;
                     case StateFlag.FieldJ:
 						if (data == '#')
-						{
 							CurrentState = StateFlag.Closed;
-							triggerParsing = true;
-						}
 						break;
                     case StateFlag.Closed:
 						if (data == '$')
-						{
 							CurrentState = StateFlag.MsgBegin;
-							collection = DataCollectionFlag.Off;
-						}
 						break;
                     case StateFlag.MsgBegin:
 						if (data == 'A')
-						{
 							CurrentState = StateFlag.FieldA;
-							collection = DataCollectionFlag.Off;
-						}
 						break;
                     default:
-						collection = DataCollectionFlag.On;
-                        break;
+						break;
                 }
-
-				//switch (data)
-				//{
-				//	case '$':
-				//		if (CurrentState == StateFlag.Closed)
-				//		{
-				//			CurrentState = StateFlag.MsgBegin;
-				//			collection = DataCollectionFlag.Off;
-				//		}
-				//		break;
-				//	case 'A':
-				//		if (CurrentState == StateFlag.MsgBegin)
-				//		{
-				//			CurrentState = StateFlag.FieldA;
-				//			collection = DataCollectionFlag.Off;
-				//		}
-				//		break;
-				//	case 'B':
-				//		if (CurrentState == StateFlag.FieldA)
-				//		{
-				//			CurrentState = StateFlag.FieldB;
-				//			collection = DataCollectionFlag.Off;
-				//		}
-				//		break;
-				//	case 'C':
-				//		if (CurrentState == StateFlag.FieldB)
-				//		{
-				//			CurrentState = StateFlag.FieldC;
-				//			collection = DataCollectionFlag.Off;
-				//		}
-				//		break;
-				//	case 'D':
-				//		if (CurrentState == StateFlag.FieldC)
-				//		{
-				//			CurrentState = StateFlag.FieldD;
-				//			collection = DataCollectionFlag.Off;
-				//		}
-				//		break;
-				//	case 'E':
-				//		if (CurrentState == StateFlag.FieldD)
-				//		{
-				//			CurrentState = StateFlag.FieldE;
-				//			collection = DataCollectionFlag.Off;
-				//		}
-				//		break;
-				//	case 'F':
-				//		if (CurrentState == StateFlag.FieldE)
-				//		{
-				//			CurrentState = StateFlag.FieldF;
-				//			collection = DataCollectionFlag.Off;
-				//		}
-				//		break;
-				//	case 'G':
-				//		if (CurrentState == StateFlag.FieldF)
-				//		{
-				//			CurrentState = StateFlag.FieldG;
-				//			collection = DataCollectionFlag.Off;
-				//		}
-				//		break;
-				//	case 'H':
-				//		if (CurrentState == StateFlag.FieldG)
-				//		{
-				//			CurrentState = StateFlag.FieldH;
-				//			collection = DataCollectionFlag.Off;
-				//		}
-				//		break;
-				//	case 'I':
-				//		if (CurrentState == StateFlag.FieldH)
-				//		{
-				//			CurrentState = StateFlag.FieldI;
-				//			collection = DataCollectionFlag.Off;
-				//		}
-				//		break;
-				//	case 'J':
-				//		if (CurrentState == StateFlag.FieldI)
-				//		{
-				//			CurrentState = StateFlag.FieldJ;
-				//			collection = DataCollectionFlag.Off;
-				//		}
-				//		break;
-				//	case '#':
-				//		CurrentState = StateFlag.Closed;
-				//		collection = DataCollectionFlag.Trigger;
-				//		break;
-				//	default:
-				//		collection = DataCollectionFlag.On;
-				//		break;
-				//}
 			}
 
 			/// <summary>
@@ -238,14 +113,10 @@
 			/// <param name="data">Data to respond to</param>
 			private void UpdateParserData(char data)
 			{
-				if (collection == DataCollectionFlag.On)
+				if (char.IsDigit(data))
 				{
-					Serilog.Log.Debug("Parsed char: {0}",data);
 					switch (CurrentState)
 					{
-						case StateFlag.Closed:
-							//parserData.Clear();
-							break;
 						case StateFlag.FieldA:
 							parserData.Fields[0] += data;
 							break;
