@@ -8,7 +8,15 @@ namespace SemesterProject.SerialCommunication
 		{
 			public class ParserData
 			{
-				public string[] Fields = new string[10];
+				//public string[] Fields = new string[10];
+				public string[] Fields;
+
+				public ParserData()
+                {
+					Fields = new string[10];
+					Clear();
+				}
+
 
 				/// <summary>
 				/// Resets the data fields to an empty state
