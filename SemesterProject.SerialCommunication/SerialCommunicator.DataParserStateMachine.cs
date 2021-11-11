@@ -240,6 +240,7 @@
 			{
 				if (collection == DataCollectionFlag.On)
 				{
+					Serilog.Log.Debug("Parsed char: {0}",data);
 					switch (CurrentState)
 					{
 						case StateFlag.Closed:
