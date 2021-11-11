@@ -138,7 +138,7 @@ namespace SemesterProject.NetworkCommunication
 				}
 				finally
 				{
-					Log.Debug("Broadcast listener stopped");
+					Log.Information("Broadcast listener stopped");
 				}
 
 			}, broadcastCanceller.Token);
