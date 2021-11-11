@@ -12,121 +12,40 @@ namespace SemesterProject.NetworkCommunication
 {
 	public class SocketServer: IDisposable
 	{
-		Socket listener;
-		List<SocketServerSession> sessions;
+		private Socket listener;
+		private List<SocketServerSession> sessions;
 
-		CancellationTokenSource cancellation;
-		Task worker;
-		
-		Aes crypto;
+		private CancellationTokenSource cancellation;
+		private Task worker;
 
-		UdpClient broadcast;
-		IPEndPoint broadcastEndPoint;
-		CancellationTokenSource broadcastCanceller;
-		Task broadcaster;
+		private Aes crypto;
 
-		DateTime lastSessionCheck;
-		TimeSpan sessionCheckInterval;
+		private UdpClient broadcast;
+		private IPEndPoint broadcastEndPoint;
+		private CancellationTokenSource broadcastCanceller;
+		private Task broadcaster;
+
+		private DateTime lastSessionCheck;
+		private TimeSpan sessionCheckInterval;
+
 		public SocketServer(Aes aes)
 		{
 			Socket listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 			IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Any, CommonValues.TcpServerPort);
 			listener.Bind(serverEndPoint);
 			
-			init(listener, aes);
+			Init(listener, aes);
 		}
-
 
 		public SocketServer(Socket listener, Aes aes)
 		{
-			init(listener, aes);
+			Init(listener, aes);
 		}
-
-		private void init(Socket listener, Aes aes)
-		{
-			lastSessionCheck = DateTime.Now;
-			sessionCheckInterval = TimeSpan.FromSeconds(30);
-			Log.Information("Starting server on {0}", listener.LocalEndPoint);
-			crypto = aes;
-			this.listener = listener;
-			this.listener.Blocking = false;
-			this.listener.Listen(1000);
-			sessions = new List<SocketServerSession>();
-			cancellation = new CancellationTokenSource();
-
-			worker = Task.Run(async () =>
-			{
-				try
-				{
-					for (; ; )
-					{
-						cancellation.Token.ThrowIfCancellationRequested();
-						await this.update();
-					}
-				}
-				catch (OperationCanceledException ex)
-				{
-					Log.Debug(ex, "Worker thread aborted");
-				}
-				catch (Exception ex)
-				{
-					Log.Error(ex, "Unknown error");
-				}
-			}, cancellation.Token);
-
-			Log.Information("Started server on {0}", listener.LocalEndPoint);
-
-			initBroadcast();
-		}
-
-		async Task broadcastUpdate()
-		{
-			Task timeDelay = Task.Delay(5000);
-			byte[] buffer = { (CommonValues.BroadcastValidatorValue & (0xff << 8)) >> 8, CommonValues.BroadcastValidatorValue & 0xff };
-			broadcast.Send(buffer,2);
-			Log.Debug("Broadcast sendt");
-			await timeDelay;
-
-		}
-
-		void initBroadcast()
-		{
-			broadcastEndPoint = new IPEndPoint(IPAddress.Broadcast, CommonValues.UdpBroadcastPort);
-			broadcastCanceller = new CancellationTokenSource();
-
-			broadcast = new UdpClient(CommonValues.UdpBroadcastHostPort);
-			broadcast.Connect(broadcastEndPoint);
-
-			Log.Information("Starting broadcaster on {0}", broadcast.Client.LocalEndPoint);
-			broadcaster = Task.Run(async () =>
-			{
-				try
-				{
-					for (; ; )
-					{
-						broadcastCanceller.Token.ThrowIfCancellationRequested();
-						await broadcastUpdate();
-					}
-				}
-				catch (OperationCanceledException ex)
-				{
-					Log.Debug(ex, "Broadcast listener stopped");
-				}
-				catch (Exception ex)
-				{
-					Log.Error(ex, "Unknown error");
-				}
-
-			}, broadcastCanceller.Token);
-			Log.Information("Started broadcaster on {0}", broadcast.Client.LocalEndPoint);
-		}
-
 		~SocketServer()
 		{
 			Log.Debug(this.ToString(), "Destuctor");
 			this.Dispose();
 		}
-
 		public void Dispose()
 		{
 			Log.Debug(messageTemplate: "Dispose {0}", this);
@@ -162,7 +81,94 @@ namespace SemesterProject.NetworkCommunication
 			return $"{base.GetType().Name}({listener})";
 		}
 
-		async Task update()
+		private void Init(Socket listener, Aes aes)
+		{
+			lastSessionCheck = DateTime.Now;
+			sessionCheckInterval = TimeSpan.FromSeconds(30);
+			Log.Information("Starting server on {0}", listener.LocalEndPoint);
+			crypto = aes;
+			this.listener = listener;
+			this.listener.Blocking = false;
+			this.listener.Listen(1000);
+			sessions = new List<SocketServerSession>();
+			cancellation = new CancellationTokenSource();
+
+			InitWorker();
+
+			Log.Information("Started server on {0}", listener.LocalEndPoint);
+
+			InitBroadcast();
+		}
+
+        #region Broadcaster
+        private void InitBroadcast()
+		{
+			broadcastEndPoint = new IPEndPoint(IPAddress.Broadcast, CommonValues.UdpBroadcastPort);
+			broadcastCanceller = new CancellationTokenSource();
+
+			broadcast = new UdpClient(CommonValues.UdpBroadcastHostPort);
+			broadcast.Connect(broadcastEndPoint);
+
+			Log.Information("Starting broadcaster on {0}", broadcast.Client.LocalEndPoint);
+			broadcaster = Task.Run(async () =>
+			{
+				try
+				{
+					for (; ; )
+					{
+						broadcastCanceller.Token.ThrowIfCancellationRequested();
+						await BroadcastUpdate();
+					}
+				}
+				catch (OperationCanceledException ex)
+				{
+					Log.Debug(ex, "Broadcast listener stopped");
+				}
+				catch (Exception ex)
+				{
+					Log.Error(ex, "Unknown error");
+				}
+
+			}, broadcastCanceller.Token);
+			Log.Information("Started broadcaster on {0}", broadcast.Client.LocalEndPoint);
+		}
+
+		private async Task BroadcastUpdate()
+		{
+			Task timeDelay = Task.Delay(5000);
+			byte[] buffer = { (CommonValues.BroadcastValidatorValue & (0xff << 8)) >> 8, CommonValues.BroadcastValidatorValue & 0xff };
+			broadcast.Send(buffer, 2);
+			Log.Debug("Broadcast sendt");
+			await timeDelay;
+
+		}
+        #endregion
+
+        #region Worker
+        private void InitWorker()
+        {
+			worker = Task.Run(async () =>
+			{
+				try
+				{
+					for (; ; )
+					{
+						cancellation.Token.ThrowIfCancellationRequested();
+						await this.UpdateWorker();
+					}
+				}
+				catch (OperationCanceledException ex)
+				{
+					Log.Debug(ex, "Worker thread aborted");
+				}
+				catch (Exception ex)
+				{
+					Log.Error(ex, "Unknown error");
+				}
+			}, cancellation.Token);
+		}
+
+		private async Task UpdateWorker()
 		{
 			try
 			{
@@ -204,7 +210,7 @@ namespace SemesterProject.NetworkCommunication
 				}
 				Log.Debug("Removed expired/inactive sessions");
 			}
-
 		}
-	}
+        #endregion
+    }
 }

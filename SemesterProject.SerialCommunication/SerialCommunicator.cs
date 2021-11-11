@@ -9,12 +9,13 @@ namespace SemesterProject.SerialCommunication
 {
 	public partial class SerialCommunicator : IDisposable
 	{
-		Queue<SerialCommand> commandQueue;
-		DataParserStateMachine fsm;
-		SerialPort port;
 		public event EventHandler<SerialStatusUpdateEventArgs> StatusRecieved;
-		Task updater;
-		CancellationTokenSource updateCanceler;
+
+		private Queue<SerialCommand> commandQueue;
+		private DataParserStateMachine fsm;
+		private SerialPort port;
+		private Task updater;
+		private CancellationTokenSource updateCanceler;
 
 		public SerialCommunicator(SerialPort serialPort)
 		{
@@ -24,6 +25,43 @@ namespace SemesterProject.SerialCommunication
 			updateCanceler = new CancellationTokenSource();
 
 			Log.Information("Starting monitoring on {0}", port.PortName);
+			InitWorker();
+			Log.Information("Started monitoring on {0}", port.PortName);
+		}
+
+        ~SerialCommunicator()
+		{
+			Dispose();
+		}
+
+		public async void Dispose()
+		{
+			Log.Debug("Dispose {0}", this.GetType().Name);
+			try
+			{
+				Log.Debug("Stopping worker: {0}", this.GetType().Name);
+				updateCanceler?.Cancel();
+				if (!updater.IsCompleted)
+					await updater;
+				Log.Debug("Stopped worker: {0}", this.GetType().Name);
+
+				updater?.Dispose();
+				updateCanceler?.Dispose();
+			}
+			catch (Exception ex)
+			{
+				Log.Error(ex, "Unknown error");
+			}
+		}
+
+		public void EnqueueCommand(SerialCommand command)
+		{
+			commandQueue.Enqueue(command);
+		}
+
+        #region Worker
+        private void InitWorker()
+		{
 			updater = Task.Run(async () =>
 			{
 				try
@@ -31,7 +69,7 @@ namespace SemesterProject.SerialCommunication
 					for (; ; )
 					{
 						updateCanceler.Token.ThrowIfCancellationRequested();
-						await this.Update();
+						await this.UpdateWorker();
 					}
 				}
 				catch (OperationCanceledException ex)
@@ -44,20 +82,9 @@ namespace SemesterProject.SerialCommunication
 				}
 
 			}, updateCanceler.Token);
-			Log.Information("Started monitoring on {0}", port.PortName);
 		}
 
-		~SerialCommunicator()
-		{
-			Dispose();
-		}
-
-		public void EnqueueCommand(SerialCommand command)
-		{
-			commandQueue.Enqueue(command);
-		}
-
-		async Task Update()
+		private async Task UpdateWorker()
 		{
 			try
 			{
@@ -89,25 +116,6 @@ namespace SemesterProject.SerialCommunication
 				Log.Error(ex, "Serial operations failed");
 			}
 		}
-
-		public async void Dispose()
-		{
-			Log.Debug("Dispose {0}", this.GetType().Name);
-			try
-			{
-				Log.Debug("Stopping worker: {0}", this.GetType().Name);
-				updateCanceler?.Cancel();
-				if (!updater.IsCompleted)
-					await updater;
-				Log.Debug("Stopped worker: {0}", this.GetType().Name);
-
-				updater?.Dispose();
-				updateCanceler?.Dispose();
-			}
-			catch (Exception ex)
-			{
-				Log.Error(ex, "Unknown error");
-			}
-		}
-	}
+        #endregion
+    }
 }

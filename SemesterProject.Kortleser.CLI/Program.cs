@@ -6,12 +6,15 @@ using Serilog;
 using System.IO.Ports;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
+using System.Collections.Generic;
 
 namespace SemesterProject.Kortleser.CLI
 {
 	class Program
 	{
 		static SocketClientSession clientSession;
+		static SerialCommunicator dataReader;
+		static AuthStateController controller;
 		static async Task Main(string[] args)
 		{
 			ProgramCore.SetupLoging();
@@ -67,16 +70,24 @@ namespace SemesterProject.Kortleser.CLI
 				return;
 			}
 
-			using var dataReader = new SerialCommunicator(comPort);
+			dataReader = new SerialCommunicator(comPort);
 			dataReader.StatusRecieved += DataReader_StatusRecieved;
 
 			Aes aes = AesSecret.GetAes();
 
 			clientSession = new SocketClientSession(aes);
+            clientSession.UpdateNodeClock += ClientSession_UpdateNodeClock;
+            clientSession.UpdateAccessTable += ClientSession_UpdateAccessTable;
+
+			controller = new AuthStateController();
+            controller.RequestAccessTable += Controller_RequestAccessTable;
 
 			Console.CancelKeyPress += ProgramCore.Console_CancelKeyPress;
 
 			await ProgramCore.CheckStopFlag();
+
+			dataReader.Dispose();
+			clientSession.Dispose();
 			Log.Information("End of program");
 
 #if DEBUG
@@ -84,24 +95,46 @@ namespace SemesterProject.Kortleser.CLI
 #endif
 		}
 
+        private static void Controller_RequestAccessTable(object sender, SerialStatusUpdateEventArgs e)
+        {
+			var message = new NetworkMessage()
+			{
+				Type = NetworkMessage.MessageType.RequestAccessTable,
+				MessageTimestamp = DateTime.Now,
+				NodeNumber = e.StatusData.NodeNumber,
+				UnitTimestamp = e.StatusData.Timestamp,
+				MessageObject = null
+			};
+
+			clientSession.EnqueueNetworkData(message);
+        }
+
+        private static void ClientSession_UpdateAccessTable(object sender, NetworkMessageUpdateEventArgs e)
+        {
+			if (e.MessageData.MessageObject is SortedSet<UserPermission>)
+				controller.AuthTable = e.MessageData.MessageObject as SortedSet<UserPermission>;
+        }
+
+        private static void ClientSession_UpdateNodeClock(object sender, NetworkMessageUpdateEventArgs e)
+        {
+            var commands = SerialCommand.SetDateTime(e.MessageData.UnitTimestamp);
+			foreach (var command in commands) dataReader.EnqueueCommand(command);
+        }
+
 		private static void DataReader_StatusRecieved(object sender, SerialStatusUpdateEventArgs e)
 		{
-			Log.Information("Serial status data recieved from node {0}",e.StatusData.NodeNumber);
+			Log.Information("Serial status data recieved from node {0}", e.StatusData.NodeNumber);
 			Console.WriteLine(e.StatusData);
 			NetworkMessage data = new NetworkMessage()
 			{
 				MessageTimestamp = DateTime.Now,
 				UnitTimestamp = e.StatusData.Timestamp,
-				UnitNumber = e.StatusData.NodeNumber,
+				NodeNumber = e.StatusData.NodeNumber,
 				Type = NetworkMessage.MessageType.Other,
 				MessageObject = null
 			};
-
-            try
-            {
-				clientSession?.EnqueueNetworkData(data);
-			}
-			catch (Exception) { }
+		
+			clientSession?.EnqueueNetworkData(data);
 		}
 	}
 }

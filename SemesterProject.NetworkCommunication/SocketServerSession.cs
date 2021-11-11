@@ -18,20 +18,30 @@ namespace SemesterProject.NetworkCommunication
 {
 	class SocketServerSession: IDisposable
 	{
-		Socket client;
-		NetworkStream clientStream;
-		CryptoStream cryptoWriter;
-		CryptoStream cryptoReader;
+        #region Events
+        public static event EventHandler<NetworkMessageUpdateEventArgs> MessageRecieved;
+		public static event EventHandler<NetworkMessageUpdateEventArgs> UpdateAccessTable;
+		public static event EventHandler<NetworkMessageUpdateEventArgs> Breach;
+		public static event EventHandler<NetworkMessageUpdateEventArgs> AuthSuccess;
+		public static event EventHandler<NetworkMessageUpdateEventArgs> AuthFailure;
+		public static event EventHandler<NetworkMessageUpdateEventArgs> AuthTimeout;
+		public static event EventHandler<NetworkMessageUpdateEventArgs> OtherMessage;
+		public static event EventHandler<NetworkMessageUpdateEventArgs> KeypadPress;
+        #endregion
 
-		CancellationTokenSource canceller;
-		Task worker;
+        public bool IsCompleted { get => worker.IsCompleted; }
 
-		
-		Aes crypto;
+		private Socket client;
+		private NetworkStream clientStream;
+		private CryptoStream cryptoWriter;
+		private CryptoStream cryptoReader;
 
-		public bool IsCompleted { get => worker.IsCompleted; }
+		private CancellationTokenSource canceller;
+		private Task worker;
 
-		Queue<NetworkMessage> messageQueue;
+		private Aes crypto;
+
+		private Queue<NetworkMessage> messageQueue;
 
 		public SocketServerSession(Socket client, Aes aes)
 		{
@@ -46,30 +56,7 @@ namespace SemesterProject.NetworkCommunication
 
 			canceller = new CancellationTokenSource();
 
-			worker = Task.Run( () =>
-			{
-				try
-				{
-					for (; ; )
-					{
-						canceller.Token.ThrowIfCancellationRequested();
-						this.update();
-					}
-				}
-				catch (OperationCanceledException ex)
-				{
-					Log.Information(ex, "Worker thread aborted");
-				}
-				catch (IOException ex)
-                {
-					Log.Error(ex, "Stream error");
-					canceller.Cancel();
-                }
-				catch (Exception ex)
-				{
-					Log.Error(ex, "Unknown error");
-				}
-			}, canceller.Token);
+			InitWorker();
 		}
 		~SocketServerSession()
 		{
@@ -104,9 +91,36 @@ namespace SemesterProject.NetworkCommunication
 			messageQueue.Enqueue(data);
 		}
 
-		
+        #region Worker
+        private void InitWorker()
+        {
+			worker = Task.Run(() =>
+			{
+				try
+				{
+					for (; ; )
+					{
+						canceller.Token.ThrowIfCancellationRequested();
+						this.UpdateWorker();
+					}
+				}
+				catch (OperationCanceledException ex)
+				{
+					Log.Information(ex, "Worker thread aborted");
+				}
+				catch (IOException ex)
+				{
+					Log.Error(ex, "Stream error");
+					canceller.Cancel();
+				}
+				catch (Exception ex)
+				{
+					Log.Error(ex, "Unknown error");
+				}
+			}, canceller.Token);
+		}
 
-		void update()
+		private void UpdateWorker()
 		{
 			try
 			{
@@ -116,9 +130,41 @@ namespace SemesterProject.NetworkCommunication
 					BinaryFormatter binaryFormatter = new BinaryFormatter();
 					data = binaryFormatter?.Deserialize(cryptoReader) as NetworkMessage;
 					if (!(data is null))
-                    {
-						Log.Information("Network message recieved from node: {0}", data.UnitNumber);
-                    }
+					{
+						NetworkMessageUpdateEventArgs e = new NetworkMessageUpdateEventArgs()
+						{
+							MessageData = data
+						};
+						Log.Information("Network message recieved from node: {0}", data.NodeNumber);
+						MessageRecieved?.Invoke(this, e);
+						switch (data.Type)
+						{
+							case NetworkMessage.MessageType.RequestAccessTable:
+								//SortedSet<UserPermission>
+								UpdateAccessTable?.Invoke(this, e);
+								break;
+							case NetworkMessage.MessageType.Breach:
+								Breach?.Invoke(this, e);
+								break;
+							case NetworkMessage.MessageType.KeypadPress:
+								KeypadPress?.Invoke(this, e);
+								break;
+							case NetworkMessage.MessageType.AuthSuccess:
+								AuthSuccess?.Invoke(this, e);
+								break;
+							case NetworkMessage.MessageType.AuthFailure:
+								AuthFailure?.Invoke(this, e);
+								break;
+							case NetworkMessage.MessageType.AuthTimeout:
+								AuthTimeout?.Invoke(this, e);
+								break;
+							case NetworkMessage.MessageType.Other:
+								OtherMessage?.Invoke(this, e);
+								break;
+							default:
+								break;
+						}
+					}
 				}
 				if (messageQueue.Count != 0 && !(cryptoWriter is null))
 				{
@@ -138,7 +184,7 @@ namespace SemesterProject.NetworkCommunication
 			{
 				Log.Error(ex, "Network communiction failed: {0}", client);
 			}
-
 		}
-	}
+        #endregion
+    }
 }

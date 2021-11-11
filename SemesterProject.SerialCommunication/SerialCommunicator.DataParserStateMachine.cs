@@ -4,22 +4,31 @@
 	{
 		partial class DataParserStateMachine
 		{
-			public enum StateFlag { FieldA, FieldB, FieldC, FieldD, FieldE, FieldF, FieldG, FieldH, FieldI, FieldJ, Closed, MsgBegin }
-			enum DataCollectionFlag { On, Off, Trigger }
+            #region Enums
+            public enum StateFlag { FieldA, FieldB, FieldC, FieldD, FieldE, FieldF, FieldG, FieldH, FieldI, FieldJ, Closed, MsgBegin }
+			private enum DataCollectionFlag { On, Off, Trigger }
+            #endregion
 
-			public StateFlag CurrentState = StateFlag.Closed;
-			DataCollectionFlag collection = DataCollectionFlag.On;
-			ParserData parserData;
+            public StateFlag CurrentState = StateFlag.Closed;
+			
+			private DataCollectionFlag collection = DataCollectionFlag.On;
+			private ParserData parserData;
 
 			public DataParserStateMachine()
 			{
 				parserData = new ParserData();
 			}
 
+			/// <summary>
+			/// Handles the update process and event data
+			/// </summary>
+			/// <param name="data">Data to respond to</param>
+			/// <param name="e">Event data</param>
+			/// <returns>Control flag to trigger an event</returns>
 			public bool Update(char data, out SerialStatusUpdateEventArgs e)
 			{
-				updateReaderStatus(data);
-				bool ctrl = updateParsedData(data);
+				UpdateReaderStatus(data);
+				bool ctrl = UpdateParserData(data);
 				if (ctrl)
 				{
 					e = new SerialStatusUpdateEventArgs();
@@ -31,7 +40,12 @@
 				}
 				return ctrl;
 			}
-			private void updateReaderStatus(char data)
+
+			/// <summary>
+			/// Handles internal state update logic
+			/// </summary>
+			/// <param name="data">Data to respond to</param>
+			private void UpdateReaderStatus(char data)
 			{
 				switch (data)
 				{
@@ -121,7 +135,13 @@
 						break;
 				}
 			}
-			private bool updateParsedData(char data)
+
+			/// <summary>
+			/// Handles data parsing into a <see cref="ParserData"/> object
+			/// </summary>
+			/// <param name="data">Data to respond to</param>
+			/// <returns>Control flag to trigger an event</returns>
+			private bool UpdateParserData(char data)
 			{
 				bool ctrl = false;
 				if (collection == DataCollectionFlag.On)

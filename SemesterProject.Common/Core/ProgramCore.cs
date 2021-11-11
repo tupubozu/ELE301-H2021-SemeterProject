@@ -8,8 +8,8 @@ namespace SemesterProject.Common.Core
 {
 	public static class ProgramCore
 	{
-		static bool programStopFlag = false;
-		static object syncObject =  new object();
+		private static bool programStopFlag = false;
+		private static object syncObject =  new object();
 		public static void SetupLoging()
 		{
 			Log.Logger = new LoggerConfiguration()

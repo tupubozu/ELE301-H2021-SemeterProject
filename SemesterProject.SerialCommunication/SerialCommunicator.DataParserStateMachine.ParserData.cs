@@ -10,6 +10,9 @@ namespace SemesterProject.SerialCommunication
 			{
 				public string[] Fields = new string[10];
 
+				/// <summary>
+				/// Resets the data fields to an empty state
+				/// </summary>
 				public void Clear()
 				{
 					for (int i = 0; i < Fields.Length; i++)
@@ -17,6 +20,12 @@ namespace SemesterProject.SerialCommunication
 						Fields[i] = string.Empty;
 					}
 				}
+
+				/// <summary>
+				/// Converts a <see cref="ParserData"/> object into a new <see cref="SerialStatusData"/> object
+				/// </summary>
+				/// <param name="data">Data to convert</param>
+				/// <returns>A converted object representing the input object</returns>
 				public static SerialStatusData ParseStatusData(ParserData data)
 				{
 					int offset = data.Fields[data.Fields.Length - 1] != string.Empty ? 1 : 0;
