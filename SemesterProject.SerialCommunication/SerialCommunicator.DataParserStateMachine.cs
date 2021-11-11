@@ -25,18 +25,17 @@
 			/// <param name="data">Data to respond to</param>
 			/// <param name="e">Event data</param>
 			/// <returns>Control flag to trigger an event</returns>
-			public bool Update(char data, out SerialStatusUpdateEventArgs e)
+			public bool Update(char data, out SerialStatusData e)
 			{
 				UpdateReaderStatus(data);
 				
 				if (triggerParsing)
 				{
-					e = new SerialStatusUpdateEventArgs();
-					e.StatusData = ParserData.ParseStatusData(parserData);
+					e = ParserData.ParseStatusData(parserData);
 				}
 				else
 				{
-					e = SerialStatusUpdateEventArgs.Empty;
+					e = null;
 				}
 				UpdateParserData(data);
 

@@ -9,7 +9,7 @@ namespace SemesterProject.SerialCommunication
 {
 	public partial class SerialCommunicator : IDisposable
 	{
-		public event EventHandler<SerialStatusUpdateEventArgs> StatusRecieved;
+		public event EventHandler<SerialStatusData> StatusRecieved;
 
 		private Queue<SerialCommand> commandQueue;
 		private DataParserStateMachine fsm;
@@ -94,7 +94,7 @@ namespace SemesterProject.SerialCommunication
 					for (; ; )
 					{
 						if (port.BytesToRead == 0) break;
-						else if (fsm.Update((char)port.ReadChar(), out SerialStatusUpdateEventArgs e))
+						else if (fsm.Update((char)port.ReadChar(), out SerialStatusData e))
 						{
 							StatusRecieved?.Invoke(this, e);
 						}

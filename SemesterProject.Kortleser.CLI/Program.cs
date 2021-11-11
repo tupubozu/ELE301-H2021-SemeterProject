@@ -81,6 +81,12 @@ namespace SemesterProject.Kortleser.CLI
 
 			controller = new AuthStateController();
             controller.RequestAccessTable += Controller_RequestAccessTable;
+            controller.Closed += Controller_Closed;
+            controller.KeypadPress += Controller_KeypadPress;
+            controller.AuthSuccess += Controller_AuthSuccess;
+            controller.AuthFailure += Controller_AuthFailure;
+            controller.AuthTimeout += Controller_AuthTimeout;
+            controller.Breached += Controller_Breached;
 
 			Console.CancelKeyPress += ProgramCore.Console_CancelKeyPress;
 
@@ -95,7 +101,91 @@ namespace SemesterProject.Kortleser.CLI
 #endif
 		}
 
-        private static void Controller_RequestAccessTable(object sender, SerialStatusUpdateEventArgs e)
+        private static void Controller_Breached(object sender, AuthControllerEventArgs e)
+        {
+			var message = new NetworkMessage()
+			{
+				Type = NetworkMessage.MessageType.Breach,
+				MessageTimestamp = DateTime.Now,
+				NodeNumber = e.StatusData.NodeNumber,
+				UnitTimestamp = e.StatusData.Timestamp,
+				MessageObject = null
+			};
+
+			clientSession.EnqueueNetworkData(message);
+		}
+
+        private static void Controller_AuthTimeout(object sender, AuthControllerEventArgs e)
+        {
+			var message = new NetworkMessage()
+			{
+				Type = NetworkMessage.MessageType.AuthTimeout,
+				MessageTimestamp = DateTime.Now,
+				NodeNumber = e.StatusData.NodeNumber,
+				UnitTimestamp = e.StatusData.Timestamp,
+				MessageObject = null
+			};
+
+			clientSession.EnqueueNetworkData(message);
+		}
+
+        private static void Controller_AuthFailure(object sender, AuthControllerEventArgs e)
+        {
+			var message = new NetworkMessage()
+			{
+				Type = NetworkMessage.MessageType.AuthFailure,
+				MessageTimestamp = DateTime.Now,
+				NodeNumber = e.StatusData.NodeNumber,
+				UnitTimestamp = e.StatusData.Timestamp,
+				MessageObject = e.Permission
+			};
+
+			clientSession.EnqueueNetworkData(message);
+		}
+
+        private static void Controller_AuthSuccess(object sender, AuthControllerEventArgs e)
+        {
+			var message = new NetworkMessage()
+			{
+				Type = NetworkMessage.MessageType.AuthSuccess,
+				MessageTimestamp = DateTime.Now,
+				NodeNumber = e.StatusData.NodeNumber,
+				UnitTimestamp = e.StatusData.Timestamp,
+				MessageObject = e.Permission
+			};
+
+			clientSession.EnqueueNetworkData(message);
+		}
+
+        private static void Controller_KeypadPress(object sender, AuthControllerEventArgs e)
+        {
+			var message = new NetworkMessage()
+			{
+				Type = NetworkMessage.MessageType.KeypadPress,
+				MessageTimestamp = DateTime.Now,
+				NodeNumber = e.StatusData.NodeNumber,
+				UnitTimestamp = e.StatusData.Timestamp,
+				MessageObject = null
+			};
+
+			clientSession.EnqueueNetworkData(message);
+		}
+
+        private static void Controller_Closed(object sender, AuthControllerEventArgs e)
+        {
+			var message = new NetworkMessage()
+			{
+				Type = NetworkMessage.MessageType.Closed,
+				MessageTimestamp = DateTime.Now,
+				NodeNumber = e.StatusData.NodeNumber,
+				UnitTimestamp = e.StatusData.Timestamp,
+				MessageObject = null
+			};
+
+			clientSession.EnqueueNetworkData(message);
+		}
+
+        private static void Controller_RequestAccessTable(object sender, AuthControllerEventArgs e)
         {
 			var message = new NetworkMessage()
 			{
@@ -121,15 +211,15 @@ namespace SemesterProject.Kortleser.CLI
 			foreach (var command in commands) dataReader.EnqueueCommand(command);
         }
 
-		private static void DataReader_StatusRecieved(object sender, SerialStatusUpdateEventArgs e)
+		private static void DataReader_StatusRecieved(object sender, SerialStatusData e)
 		{
-			Log.Information("Serial status data recieved from node {0}", e.StatusData.NodeNumber);
-			Console.WriteLine(e.StatusData);
+			Log.Information("Serial status data recieved from node {0}", e.NodeNumber);
+			Console.WriteLine(e);
 			NetworkMessage data = new NetworkMessage()
 			{
 				MessageTimestamp = DateTime.Now,
-				UnitTimestamp = e.StatusData.Timestamp,
-				NodeNumber = e.StatusData.NodeNumber,
+				UnitTimestamp = e.Timestamp,
+				NodeNumber = e.NodeNumber,
 				Type = NetworkMessage.MessageType.Other,
 				MessageObject = null
 			};

@@ -10,13 +10,13 @@ namespace SemesterProject.Kortleser.CLI
 {
     internal class AuthStateController
     {
-        public event EventHandler<SerialStatusUpdateEventArgs> Closed;
-        public event EventHandler<SerialStatusUpdateEventArgs> Breached;
-        public event EventHandler<SerialStatusUpdateEventArgs> KeypadPress;
-        public event EventHandler<SerialStatusUpdateEventArgs> AuthSuccess;
-        public event EventHandler<SerialStatusUpdateEventArgs> AuthFailure;
-        public event EventHandler<SerialStatusUpdateEventArgs> AuthTimeout;
-        public event EventHandler<SerialStatusUpdateEventArgs> RequestAccessTable;
+        public event EventHandler<AuthControllerEventArgs> Closed;
+        public event EventHandler<AuthControllerEventArgs> Breached;
+        public event EventHandler<AuthControllerEventArgs> KeypadPress;
+        public event EventHandler<AuthControllerEventArgs> AuthSuccess;
+        public event EventHandler<AuthControllerEventArgs> AuthFailure;
+        public event EventHandler<AuthControllerEventArgs> AuthTimeout;
+        public event EventHandler<AuthControllerEventArgs> RequestAccessTable;
 
         public const int PotentiometerThresholdClosed = 250;
         SerialStatusData lastData;
@@ -116,7 +116,7 @@ namespace SemesterProject.Kortleser.CLI
 
         private void RespondToState(SerialStatusData data)
         {
-            SerialStatusUpdateEventArgs e = new SerialStatusUpdateEventArgs()
+            AuthControllerEventArgs e = new AuthControllerEventArgs()
             {
                 StatusData = data
             };
@@ -146,9 +146,11 @@ namespace SemesterProject.Kortleser.CLI
                     Closed?.Invoke(this, e);
                     break;
                 case (_, State.Unauthorized):
+                    e.Permission = AuthTable.Where((UserPermission u) => u.PassCode == keyCode)?.First();
                     AuthFailure?.Invoke(this, e);
                     break;
                 case (_, State.Authorized):
+                    e.Permission = AuthTable.Where((UserPermission u) => u.PassCode == keyCode)?.First();
                     AuthSuccess?.Invoke(this, e);
                     break;
                 case (_, State.Breached):
