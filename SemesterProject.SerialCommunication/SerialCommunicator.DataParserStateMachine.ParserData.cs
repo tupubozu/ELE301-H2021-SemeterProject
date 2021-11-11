@@ -36,7 +36,7 @@ namespace SemesterProject.SerialCommunication
 				/// <returns>A converted object representing the input object</returns>
 				public static SerialStatusData ParseStatusData(ParserData data)
 				{
-					Console.WriteLine("Length of parsed data: {}", data.Fields.Length);
+					Console.WriteLine("Length of parsed data: {0}", data.Fields.Length);
 					foreach (string s in data.Fields) Console.WriteLine(2);
 
 					int offset = data.Fields[data.Fields.Length - 1] != string.Empty ? 1 : 0;
