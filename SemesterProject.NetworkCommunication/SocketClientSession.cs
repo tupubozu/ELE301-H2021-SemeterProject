@@ -204,14 +204,14 @@ namespace SemesterProject.NetworkCommunication
 		{
 			workerCanceller = new CancellationTokenSource();
 
-			worker = Task.Run(() =>
+			worker = Task.Run(async () =>
 			{
 				try
 				{
 					for (; ; )
 					{
 						workerCanceller.Token.ThrowIfCancellationRequested();
-						this.UpdateWorker();
+						await this.UpdateWorker();
 					}
 				}
 				catch (OperationCanceledException ex)
@@ -234,7 +234,7 @@ namespace SemesterProject.NetworkCommunication
 			}, workerCanceller.Token);
 		}
 
-		private async void UpdateWorker()
+		private async Task UpdateWorker()
 		{
 			try
 			{

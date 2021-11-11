@@ -173,7 +173,7 @@ namespace SemesterProject.NetworkCommunication
 			try
 			{
 				var client = listener.Accept();
-				Log.Information($"New connection from {client.RemoteEndPoint}");
+				Log.Information("New connection from {0}", client.RemoteEndPoint);
 				sessions.Add(new SocketServerSession(client, crypto));
 			}
 			catch (SocketException ex)
