@@ -3,11 +3,14 @@ using System.Collections.Generic;
 using System.Text;
 using Serilog;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace SemesterProject.Common.Core
 {
 	public static class ProgramCore
 	{
+		public static CancellationTokenSource ProgramCancel = new CancellationTokenSource();
+
 		private static bool programStopFlag = false;
 		private static object syncObject =  new object();
 		public static void SetupLoging()
@@ -44,6 +47,7 @@ namespace SemesterProject.Common.Core
 					if (programStopFlag) break;
 				await Task.Delay(100);
 			}
+			ProgramCancel.Cancel();
 			Log.Debug("Stop flag recieved");
 		}
 	}

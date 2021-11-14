@@ -33,10 +33,14 @@ namespace SemesterProject.NetworkCommunication
 		private CancellationTokenSource workerCanceller;
 		private Task worker;
 
+		private DateTime lastAuthTableUpdate;
+		private TimeSpan AuthTableUpdateInterval = TimeSpan.FromSeconds(5);
+		private int NodeID = 0;
+
 		#region Events
-		public event EventHandler<NetworkMessageUpdateEventArgs> MessageRecieved;
-		public event EventHandler<NetworkMessageUpdateEventArgs> UpdateNodeClock;
-		public event EventHandler<NetworkMessageUpdateEventArgs> UpdateAccessTable;
+		public event EventHandler<NetworkMessage> MessageRecieved;
+		public event EventHandler<NetworkMessage> UpdateNodeClock;
+		public event EventHandler<NetworkMessage> UpdateAccessTable;
 		#endregion
 		public bool IsCompleted { get => worker.IsCompleted; }
 
@@ -80,7 +84,7 @@ namespace SemesterProject.NetworkCommunication
 			{
 				Log.Debug("Stopping broadcast listener: {0}", this.GetType().Name);
 				broadcastCanceller?.Cancel();
-				if (!(broadcastListener?.IsCompleted ?? false))
+				if (!broadcastListener?.IsCompleted ?? false)
 					broadcastListener?.Wait();
 				Log.Debug("Stopped broadcast listener: {0}", this.GetType().Name);
 				broadcastListener?.Dispose();
@@ -88,7 +92,7 @@ namespace SemesterProject.NetworkCommunication
 
 				Log.Debug("Stopping worker: {0}", this.GetType().Name);
 				workerCanceller?.Cancel();
-				if (!(worker?.IsCompleted ?? false))
+				if (!worker?.IsCompleted ?? false)
 					worker?.Wait();
 				Log.Debug("Stopped worker: {0}", this.GetType().Name);
 				worker?.Dispose();
@@ -248,6 +252,7 @@ namespace SemesterProject.NetworkCommunication
 			try
 			{
 				bool Active = false;
+				DateTime currentTime = DateTime.Now;
 
 				if (server.Available != 0 && !(cryptoReader is null))
 				{
@@ -268,19 +273,15 @@ namespace SemesterProject.NetworkCommunication
 
 					if (!(data is null))
 					{
-						Log.Information("Network message received from node: ", data.NodeNumber);
-						NetworkMessageUpdateEventArgs e = new NetworkMessageUpdateEventArgs()
-						{
-							MessageData = data
-						};
-						MessageRecieved?.Invoke(this, e);
+						NodeID = data.NodeNumber;
+                        MessageRecieved?.Invoke(this, data);
 						switch (data.Type)
 						{
 							case NetworkMessage.MessageType.UpdateAccessTable:
-								UpdateAccessTable?.Invoke(this, e);
+								UpdateAccessTable?.Invoke(this, data);
 								break;
 							case NetworkMessage.MessageType.UpdateUnitTime:
-								UpdateNodeClock?.Invoke(this, e);
+								UpdateNodeClock?.Invoke(this, data);
 								break;
 							default:
 								break;
@@ -292,7 +293,22 @@ namespace SemesterProject.NetworkCommunication
 				{
 					Active = true;
 					BinaryFormatter binaryFormatter = new BinaryFormatter();
-					binaryFormatter.Serialize(cryptoWriter, messageQueue.Dequeue());
+					binaryFormatter.Serialize(cryptoWriter, messageQueue.Peek());
+					messageQueue.Dequeue();
+				}
+
+				if (currentTime - lastAuthTableUpdate >= AuthTableUpdateInterval)
+				{
+					lastAuthTableUpdate = currentTime;
+
+					if (NodeID != 0)
+						EnqueueNetworkData(new NetworkMessage()
+						{
+							Type = NetworkMessage.MessageType.RequestAccessTable,
+							NodeNumber = NodeID,
+							MessageTimestamp = currentTime,
+							UnitTimestamp = currentTime
+						});
 				}
 
 				if (!Active) await Task.Delay(100);

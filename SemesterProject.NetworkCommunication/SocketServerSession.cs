@@ -16,17 +16,17 @@ using Serilog;
 
 namespace SemesterProject.NetworkCommunication
 {
-	class SocketServerSession: IDisposable
+	public class SocketServerSession: IDisposable
 	{
         #region Events
-        public static event EventHandler<NetworkMessageUpdateEventArgs> MessageRecieved;
-		public static event EventHandler<NetworkMessageUpdateEventArgs> UpdateAccessTable;
-		public static event EventHandler<NetworkMessageUpdateEventArgs> Breach;
-		public static event EventHandler<NetworkMessageUpdateEventArgs> AuthSuccess;
-		public static event EventHandler<NetworkMessageUpdateEventArgs> AuthFailure;
-		public static event EventHandler<NetworkMessageUpdateEventArgs> AuthTimeout;
-		public static event EventHandler<NetworkMessageUpdateEventArgs> OtherMessage;
-		public static event EventHandler<NetworkMessageUpdateEventArgs> KeypadPress;
+        public static event EventHandler<NetworkMessage> MessageRecieved;
+		public static event EventHandler<NetworkMessage> UpdateAccessTable;
+		public static event EventHandler<NetworkMessage> Breach;
+		public static event EventHandler<NetworkMessage> AuthSuccess;
+		public static event EventHandler<NetworkMessage> AuthFailure;
+		public static event EventHandler<NetworkMessage> AuthTimeout;
+		public static event EventHandler<NetworkMessage> OtherMessage;
+		public static event EventHandler<NetworkMessage> KeypadPress;
         #endregion
 
         public bool IsCompleted { get => worker.IsCompleted; }
@@ -70,7 +70,7 @@ namespace SemesterProject.NetworkCommunication
 			{
 				Log.Debug("Stopping worker: {0}", this.GetType().Name);
 				canceller?.Cancel();
-				if (!(worker?.IsCompleted ?? false))
+				if (!worker?.IsCompleted ?? false)
 					worker?.Wait();
 				Log.Debug("Stopped worker: {0}", this.GetType().Name);
 
@@ -85,7 +85,11 @@ namespace SemesterProject.NetworkCommunication
 				Log.Error(ex, "Unkown error");
 			}
 		}
-		public void EnqueueNetworkData(NetworkMessage data)
+        public override string ToString()
+        {
+			return client.RemoteEndPoint.ToString();
+        }
+        public void EnqueueNetworkData(NetworkMessage data)
 		{
 			messageQueue.Enqueue(data);
 		}
@@ -139,39 +143,35 @@ namespace SemesterProject.NetworkCommunication
 					{
 						Log.Error(ex, "Serialization failed");
 						Log.Information("Network data unreadable. Try checking preshared keys on host {0}", (client.RemoteEndPoint as IPEndPoint)?.Address);
+						throw;
 					}
 					
 					if (!(data is null))
 					{
-						NetworkMessageUpdateEventArgs e = new NetworkMessageUpdateEventArgs()
-						{
-							MessageData = data
-						};
-						Log.Information("Network message recieved from node {0}: {1}", data.NodeNumber, data.Type);
-						MessageRecieved?.Invoke(this, e);
+						MessageRecieved?.Invoke(this, data);
 						switch (data.Type)
 						{
 							case NetworkMessage.MessageType.RequestAccessTable:
 								//SortedSet<UserPermission>
-								UpdateAccessTable?.Invoke(this, e);
+								UpdateAccessTable?.Invoke(this, data);
 								break;
 							case NetworkMessage.MessageType.Breach:
-								Breach?.Invoke(this, e);
+								Breach?.Invoke(this, data);
 								break;
 							case NetworkMessage.MessageType.KeypadPress:
-								KeypadPress?.Invoke(this, e);
+								KeypadPress?.Invoke(this, data);
 								break;
 							case NetworkMessage.MessageType.AuthSuccess:
-								AuthSuccess?.Invoke(this, e);
+								AuthSuccess?.Invoke(this, data);
 								break;
 							case NetworkMessage.MessageType.AuthFailure:
-								AuthFailure?.Invoke(this, e);
+								AuthFailure?.Invoke(this, data);
 								break;
 							case NetworkMessage.MessageType.AuthTimeout:
-								AuthTimeout?.Invoke(this, e);
+								AuthTimeout?.Invoke(this, data);
 								break;
 							case NetworkMessage.MessageType.Other:
-								OtherMessage?.Invoke(this, e);
+								OtherMessage?.Invoke(this, data);
 								break;
 							default:
 								break;
@@ -195,6 +195,7 @@ namespace SemesterProject.NetworkCommunication
 			catch (SerializationException ex)
 			{
 				Log.Error(ex, "Network communiction failed: {0}", client);
+				throw;
 			}
 			catch (SecurityException ex)
 			{

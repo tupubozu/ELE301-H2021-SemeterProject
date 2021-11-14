@@ -18,7 +18,7 @@ namespace SemesterProject.Kortleser.CLI
         public event EventHandler<AuthControllerEventArgs> AuthTimeout;
         public event EventHandler<AuthControllerEventArgs> RequestAccessTable;
 
-        public const int PotentiometerThresholdClosed = 250;
+        public const int PotentiometerThresholdClosed = 500;
         SerialStatusData lastData;
         public SortedSet<UserPermission> AuthTable;
 
@@ -32,7 +32,7 @@ namespace SemesterProject.Kortleser.CLI
         private readonly TimeSpan CheckTimeoutSpan = TimeSpan.FromSeconds(3);
         private byte keypressCounter = 0;
         private byte currentKeyMask = 0;
-        private ushort keyCode = 0;
+        private uint keySequence = 0;
 
         private bool keyPressed = false;
         public void Update(SerialStatusData data)
@@ -48,7 +48,7 @@ namespace SemesterProject.Kortleser.CLI
                 byte mask = (byte)(1 << i);
                 if ((currentKeyMask & mask) == mask) pinNumber = (byte)(8 - i);
             }
-            keyCode = (ushort)(keyCode * 10 + pinNumber);
+            keySequence = (ushort)(keySequence * 10 + pinNumber);
 
             if (data.InputStatus != lastData.InputStatus && currentKeyMask != 0x00)
             {
@@ -71,7 +71,7 @@ namespace SemesterProject.Kortleser.CLI
                 case State.Closed:
                     if (data.Analog1 > PotentiometerThresholdClosed) CurrentState = State.Breached;
                     else if (data.InputStatus != lastData.InputStatus && currentKeyMask != 0x00) CurrentState = State.CheckAuth;
-                    keyCode = 0;
+                    keySequence = 0;
                     keypressCounter = 0;
                     break;
                 case State.Breached:
@@ -91,7 +91,7 @@ namespace SemesterProject.Kortleser.CLI
                 case State.CheckAuth:
                     if (data.Analog1 > PotentiometerThresholdClosed) CurrentState = State.Breached; // Priority
                     else if (currentTime - lastKeypadPress >= CheckTimeoutSpan)CurrentState = State.Closed;
-                    else if (keypressCounter == 3) 
+                    else if (keypressCounter == 7) 
                     {
                         if (!(AuthTable is null))
                         {
@@ -100,7 +100,7 @@ namespace SemesterProject.Kortleser.CLI
                             {
                                 lookupResult = AuthTable.Select((UserPermission up, int i) =>
                                 {
-                                    return up.PassCode == keyCode;
+                                    return up.UserId == (keySequence / 10000) && up.PassCode == (keySequence % 10000);
                                 });
                             }
                             if (lookupResult.Contains(true)) CurrentState = State.Authorized;
@@ -146,11 +146,11 @@ namespace SemesterProject.Kortleser.CLI
                     Closed?.Invoke(this, e);
                     break;
                 case (_, State.Unauthorized):
-                    e.Permission = AuthTable.Where((UserPermission u) => u.PassCode == keyCode)?.First();
+                    e.Permission = AuthTable.Where((UserPermission u) => u.UserId == (keySequence / keypressCounter > 3 ? (int)Math.Pow(10, keypressCounter - 4) : 1))?.First();
                     AuthFailure?.Invoke(this, e);
                     break;
                 case (_, State.Authorized):
-                    e.Permission = AuthTable.Where((UserPermission u) => u.PassCode == keyCode)?.First();
+                    e.Permission = AuthTable.Where((UserPermission u) => u.UserId == (keySequence / 10000) && u.PassCode == (keySequence % 10000))?.First();
                     AuthSuccess?.Invoke(this, e);
                     break;
                 case (_, State.Breached):

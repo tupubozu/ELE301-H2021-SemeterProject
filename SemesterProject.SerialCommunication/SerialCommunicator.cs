@@ -41,7 +41,7 @@ namespace SemesterProject.SerialCommunication
 			{
 				Log.Debug("Stopping worker: {0}", this.GetType().Name);
 				updateCanceler?.Cancel();
-				if (!(updater?.IsCompleted ?? false))
+				if (!updater?.IsCompleted ?? false)
 					await updater;
 				Log.Debug("Stopped worker: {0}", this.GetType().Name);
 

@@ -78,6 +78,7 @@ namespace SemesterProject.Kortleser.CLI
 			clientSession = new SocketClientSession(aes);
             clientSession.UpdateNodeClock += ClientSession_UpdateNodeClock;
             clientSession.UpdateAccessTable += ClientSession_UpdateAccessTable;
+            clientSession.MessageRecieved += ClientSession_MessageRecieved;
 
 			controller = new AuthStateController();
             controller.RequestAccessTable += Controller_RequestAccessTable;
@@ -101,7 +102,12 @@ namespace SemesterProject.Kortleser.CLI
 #endif
 		}
 
-        private static void Controller_Breached(object sender, AuthControllerEventArgs e)
+        private static void ClientSession_MessageRecieved(object sender, NetworkMessage e)
+        {
+			Log.Information("Network message received from node: {0}", e.NodeNumber);
+		}
+
+		private static void Controller_Breached(object sender, AuthControllerEventArgs e)
         {
 			var message = new NetworkMessage()
 			{
@@ -199,15 +205,15 @@ namespace SemesterProject.Kortleser.CLI
 			clientSession.EnqueueNetworkData(message);
         }
 
-        private static void ClientSession_UpdateAccessTable(object sender, NetworkMessageUpdateEventArgs e)
+        private static void ClientSession_UpdateAccessTable(object sender, NetworkMessage e)
         {
-			if (e.MessageData.MessageObject is SortedSet<UserPermission>)
-				controller.AuthTable = e.MessageData.MessageObject as SortedSet<UserPermission>;
+			if (e.MessageObject is SortedSet<UserPermission>)
+				controller.AuthTable = e.MessageObject as SortedSet<UserPermission>;
         }
 
-        private static void ClientSession_UpdateNodeClock(object sender, NetworkMessageUpdateEventArgs e)
+        private static void ClientSession_UpdateNodeClock(object sender, NetworkMessage e)
         {
-            var commands = SerialCommand.SetDateTime(e.MessageData.UnitTimestamp);
+            var commands = SerialCommand.SetDateTime(e.UnitTimestamp);
 			foreach (var command in commands) dataReader.EnqueueCommand(command);
         }
 
