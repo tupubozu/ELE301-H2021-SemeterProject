@@ -1,18 +1,16 @@
-﻿using System;
+﻿using SemesterProject.Common.Values;
+using Serilog;
+using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Security.Cryptography;
-using System.Net.Sockets;
+using System.IO;
 using System.Net;
+using System.Net.Sockets;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Security;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
-using Serilog;
-using System.IO;
-using SemesterProject.Common.Core;
-using SemesterProject.Common.Values;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Runtime.Serialization;
-using System.Security;
 
 namespace SemesterProject.NetworkCommunication
 {
@@ -265,16 +263,16 @@ namespace SemesterProject.NetworkCommunication
 						data = binaryFormatter.Deserialize(cryptoReader) as NetworkMessage;
 
 					}
-					catch(SerializationException ex)
+					catch (SerializationException ex)
 					{
 						Log.Error(ex, "Serialization failed");
-						Log.Information("Network data unreadable. Try checking preshared keys on host {0}",(server.RemoteEndPoint as IPEndPoint)?.Address);
+						Log.Information("Network data unreadable. Try checking preshared keys on host {0}", (server.RemoteEndPoint as IPEndPoint)?.Address);
 					}
 
 					if (!(data is null))
 					{
 						NodeID = data.NodeNumber;
-                        MessageRecieved?.Invoke(this, data);
+						MessageRecieved?.Invoke(this, data);
 						switch (data.Type)
 						{
 							case NetworkMessage.MessageType.UpdateAccessTable:

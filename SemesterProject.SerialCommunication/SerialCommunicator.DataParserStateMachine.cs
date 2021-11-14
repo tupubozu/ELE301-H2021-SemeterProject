@@ -4,13 +4,13 @@
 	{
 		partial class DataParserStateMachine
 		{
-            #region Enums
-            public enum StateFlag { FieldA, FieldB, FieldC, FieldD, FieldE, FieldF, FieldG, FieldH, FieldI, FieldJ, Closed, MsgBegin }
+			#region Enums
+			public enum StateFlag { FieldA, FieldB, FieldC, FieldD, FieldE, FieldF, FieldG, FieldH, FieldI, FieldJ, Closed, MsgBegin }
 			private enum DataCollectionFlag { On, Off, Trigger }
-            #endregion
+			#endregion
 
-            public StateFlag CurrentState = StateFlag.Closed;
-			
+			public StateFlag CurrentState = StateFlag.Closed;
+
 			private ParserData parserData;
 			private bool triggerParsing = false;
 
@@ -28,7 +28,7 @@
 			public bool Update(char data, out SerialStatusData e)
 			{
 				UpdateReaderStatus(data);
-				
+
 				if (triggerParsing)
 				{
 					e = ParserData.ParseStatusData(parserData);
@@ -49,62 +49,62 @@
 			private void UpdateReaderStatus(char data)
 			{
 				triggerParsing = false;
-                switch (CurrentState)
-                {
-                    case StateFlag.FieldA:
-						if(data == 'B')
+				switch (CurrentState)
+				{
+					case StateFlag.FieldA:
+						if (data == 'B')
 							CurrentState = StateFlag.FieldB;
 						break;
-                    case StateFlag.FieldB:
+					case StateFlag.FieldB:
 						if (data == 'C')
 							CurrentState = StateFlag.FieldC;
 						break;
-                    case StateFlag.FieldC:
+					case StateFlag.FieldC:
 						if (data == 'D')
 							CurrentState = StateFlag.FieldD;
 						break;
-                    case StateFlag.FieldD:
+					case StateFlag.FieldD:
 						if (data == 'E')
 							CurrentState = StateFlag.FieldE;
 						break;
-                    case StateFlag.FieldE:
+					case StateFlag.FieldE:
 						if (data == 'F')
 							CurrentState = StateFlag.FieldF;
 						break;
-                    case StateFlag.FieldF:
+					case StateFlag.FieldF:
 						if (data == 'G')
 							CurrentState = StateFlag.FieldG;
 						break;
-                    case StateFlag.FieldG:
+					case StateFlag.FieldG:
 						if (data == 'H')
 							CurrentState = StateFlag.FieldH;
 						break;
-                    case StateFlag.FieldH:
+					case StateFlag.FieldH:
 						if (data == 'I')
 							CurrentState = StateFlag.FieldI;
 						break;
-                    case StateFlag.FieldI:
+					case StateFlag.FieldI:
 						if (data == 'J')
 							CurrentState = StateFlag.FieldJ;
 						break;
-                    case StateFlag.FieldJ:
+					case StateFlag.FieldJ:
 						if (data == '#')
 						{
 							CurrentState = StateFlag.Closed;
 							triggerParsing = true;
 						}
 						break;
-                    case StateFlag.Closed:
+					case StateFlag.Closed:
 						if (data == '$')
 							CurrentState = StateFlag.MsgBegin;
 						break;
-                    case StateFlag.MsgBegin:
+					case StateFlag.MsgBegin:
 						if (data == 'A')
 							CurrentState = StateFlag.FieldA;
 						break;
-                    default:
+					default:
 						break;
-                }
+				}
 			}
 
 			/// <summary>

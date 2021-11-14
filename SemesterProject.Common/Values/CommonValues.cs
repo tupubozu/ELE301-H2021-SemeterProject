@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace SemesterProject.Common.Values
+﻿namespace SemesterProject.Common.Values
 {
 	public static class CommonValues
 	{

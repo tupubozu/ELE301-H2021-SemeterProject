@@ -1,16 +1,16 @@
-﻿using System;
+﻿using SemesterProject.Common.Values;
+using Serilog;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Security.Cryptography;
-using Serilog;
-using SemesterProject.Common.Values;
 
 namespace SemesterProject.NetworkCommunication
 {
-	public class SocketServer: IDisposable
+	public class SocketServer : IDisposable
 	{
 		private Socket listener;
 		private List<SocketServerSession> sessions;
@@ -33,7 +33,7 @@ namespace SemesterProject.NetworkCommunication
 			Socket listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 			IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Any, CommonValues.TcpServerPort);
 			listener.Bind(serverEndPoint);
-			
+
 			Init(listener, aes);
 		}
 
@@ -100,8 +100,8 @@ namespace SemesterProject.NetworkCommunication
 			InitBroadcast();
 		}
 
-        #region Broadcaster
-        private void InitBroadcast()
+		#region Broadcaster
+		private void InitBroadcast()
 		{
 			broadcastEndPoint = new IPEndPoint(IPAddress.Broadcast, CommonValues.UdpBroadcastPort);
 			broadcastCanceller = new CancellationTokenSource();
@@ -142,11 +142,11 @@ namespace SemesterProject.NetworkCommunication
 			await timeDelay;
 
 		}
-        #endregion
+		#endregion
 
-        #region Worker
-        private void InitWorker()
-        {
+		#region Worker
+		private void InitWorker()
+		{
 			worker = Task.Run(async () =>
 			{
 				try
@@ -214,6 +214,6 @@ namespace SemesterProject.NetworkCommunication
 				}
 			}
 		}
-        #endregion
-    }
+		#endregion
+	}
 }

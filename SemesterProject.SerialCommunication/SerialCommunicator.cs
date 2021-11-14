@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Serilog;
+using System;
+using System.Collections.Generic;
 using System.IO.Ports;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using Serilog;
 
 namespace SemesterProject.SerialCommunication
 {
@@ -29,7 +29,7 @@ namespace SemesterProject.SerialCommunication
 			Log.Information("Started monitoring on {0}", port.PortName);
 		}
 
-        ~SerialCommunicator()
+		~SerialCommunicator()
 		{
 			Dispose();
 		}
@@ -59,8 +59,8 @@ namespace SemesterProject.SerialCommunication
 			commandQueue.Enqueue(command);
 		}
 
-        #region Worker
-        private void InitWorker()
+		#region Worker
+		private void InitWorker()
 		{
 			updater = Task.Run(async () =>
 			{
@@ -116,6 +116,6 @@ namespace SemesterProject.SerialCommunication
 				Log.Error(ex, "Serial operations failed");
 			}
 		}
-        #endregion
-    }
+		#endregion
+	}
 }

@@ -6,7 +6,7 @@ namespace SemesterProject.SerialCommunication
 	{
 		public enum DataSource { Physical, Simulation }
 
-		public DataSource Source {get; private set;}
+		public DataSource Source { get; private set; }
 		public ushort NodeNumber { get; private set; }
 		public DateTime Timestamp { get; private set; }
 		public byte InputStatus { get; private set; }

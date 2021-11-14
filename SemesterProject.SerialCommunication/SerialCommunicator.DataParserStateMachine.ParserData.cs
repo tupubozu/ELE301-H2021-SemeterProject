@@ -12,7 +12,7 @@ namespace SemesterProject.SerialCommunication
 				public string[] Fields;
 
 				public ParserData()
-                {
+				{
 					Fields = new string[10];
 					Clear();
 				}

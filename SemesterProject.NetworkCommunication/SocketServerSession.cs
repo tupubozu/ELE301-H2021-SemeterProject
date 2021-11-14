@@ -1,25 +1,22 @@
-﻿using System;
+﻿using Serilog;
+using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Runtime.Serialization.Json;
-using System.Net.Sockets;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Security;
-using System.Security.Cryptography;
-using SemesterProject.Common.Core;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using System.Net;
-using Serilog;
+using System.Net.Sockets;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Security;
+using System.Security.Cryptography;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace SemesterProject.NetworkCommunication
 {
-	public class SocketServerSession: IDisposable
+	public class SocketServerSession : IDisposable
 	{
-        #region Events
-        public static event EventHandler<NetworkMessage> MessageRecieved;
+		#region Events
+		public static event EventHandler<NetworkMessage> MessageRecieved;
 		public static event EventHandler<NetworkMessage> UpdateAccessTable;
 		public static event EventHandler<NetworkMessage> Breach;
 		public static event EventHandler<NetworkMessage> AuthSuccess;
@@ -27,9 +24,9 @@ namespace SemesterProject.NetworkCommunication
 		public static event EventHandler<NetworkMessage> AuthTimeout;
 		public static event EventHandler<NetworkMessage> OtherMessage;
 		public static event EventHandler<NetworkMessage> KeypadPress;
-        #endregion
+		#endregion
 
-        public bool IsCompleted { get => worker.IsCompleted; }
+		public bool IsCompleted { get => worker.IsCompleted; }
 
 		private Socket client;
 		private NetworkStream clientStream;
@@ -85,18 +82,18 @@ namespace SemesterProject.NetworkCommunication
 				Log.Error(ex, "Unkown error");
 			}
 		}
-        public override string ToString()
-        {
+		public override string ToString()
+		{
 			return client.RemoteEndPoint.ToString();
-        }
-        public void EnqueueNetworkData(NetworkMessage data)
+		}
+		public void EnqueueNetworkData(NetworkMessage data)
 		{
 			messageQueue.Enqueue(data);
 		}
 
-        #region Worker
-        private void InitWorker()
-        {
+		#region Worker
+		private void InitWorker()
+		{
 			worker = Task.Run(async () =>
 			{
 				try
@@ -134,8 +131,8 @@ namespace SemesterProject.NetworkCommunication
 					Active = true;
 
 					NetworkMessage data = null;
-                    try
-                    {
+					try
+					{
 						BinaryFormatter binaryFormatter = new BinaryFormatter();
 						data = binaryFormatter?.Deserialize(cryptoReader) as NetworkMessage;
 					}
@@ -145,7 +142,7 @@ namespace SemesterProject.NetworkCommunication
 						Log.Information("Network data unreadable. Try checking preshared keys on host {0}", (client.RemoteEndPoint as IPEndPoint)?.Address);
 						throw;
 					}
-					
+
 					if (!(data is null))
 					{
 						MessageRecieved?.Invoke(this, data);
@@ -202,6 +199,6 @@ namespace SemesterProject.NetworkCommunication
 				Log.Error(ex, "Network communiction failed: {0}", client);
 			}
 		}
-        #endregion
-    }
+		#endregion
+	}
 }

@@ -1,12 +1,12 @@
-﻿using System;
-using SemesterProject.SerialCommunication;
+﻿using SemesterProject.Common.Core;
 using SemesterProject.NetworkCommunication;
-using SemesterProject.Common.Core;
+using SemesterProject.SerialCommunication;
 using Serilog;
-using System.IO.Ports;
-using System.Threading.Tasks;
-using System.Security.Cryptography;
+using System;
 using System.Collections.Generic;
+using System.IO.Ports;
+using System.Security.Cryptography;
+using System.Threading.Tasks;
 
 namespace SemesterProject.Kortleser.CLI
 {
@@ -76,18 +76,18 @@ namespace SemesterProject.Kortleser.CLI
 			Aes aes = AesSecret.GetAes();
 
 			clientSession = new SocketClientSession(aes);
-            clientSession.UpdateNodeClock += ClientSession_UpdateNodeClock;
-            clientSession.UpdateAccessTable += ClientSession_UpdateAccessTable;
-            clientSession.MessageRecieved += ClientSession_MessageRecieved;
+			clientSession.UpdateNodeClock += ClientSession_UpdateNodeClock;
+			clientSession.UpdateAccessTable += ClientSession_UpdateAccessTable;
+			clientSession.MessageRecieved += ClientSession_MessageRecieved;
 
 			controller = new AuthStateController();
-            controller.RequestAccessTable += Controller_RequestAccessTable;
-            controller.Closed += Controller_Closed;
-            controller.KeypadPress += Controller_KeypadPress;
-            controller.AuthSuccess += Controller_AuthSuccess;
-            controller.AuthFailure += Controller_AuthFailure;
-            controller.AuthTimeout += Controller_AuthTimeout;
-            controller.Breached += Controller_Breached;
+			controller.RequestAccessTable += Controller_RequestAccessTable;
+			controller.Closed += Controller_Closed;
+			controller.KeypadPress += Controller_KeypadPress;
+			controller.AuthSuccess += Controller_AuthSuccess;
+			controller.AuthFailure += Controller_AuthFailure;
+			controller.AuthTimeout += Controller_AuthTimeout;
+			controller.Breached += Controller_Breached;
 
 			Console.CancelKeyPress += ProgramCore.Console_CancelKeyPress;
 
@@ -102,13 +102,13 @@ namespace SemesterProject.Kortleser.CLI
 #endif
 		}
 
-        private static void ClientSession_MessageRecieved(object sender, NetworkMessage e)
-        {
+		private static void ClientSession_MessageRecieved(object sender, NetworkMessage e)
+		{
 			Log.Information("Network message received from node: {0}", e.NodeNumber);
 		}
 
 		private static void Controller_Breached(object sender, AuthControllerEventArgs e)
-        {
+		{
 			var message = new NetworkMessage()
 			{
 				Type = NetworkMessage.MessageType.Breach,
@@ -121,8 +121,8 @@ namespace SemesterProject.Kortleser.CLI
 			clientSession.EnqueueNetworkData(message);
 		}
 
-        private static void Controller_AuthTimeout(object sender, AuthControllerEventArgs e)
-        {
+		private static void Controller_AuthTimeout(object sender, AuthControllerEventArgs e)
+		{
 			var message = new NetworkMessage()
 			{
 				Type = NetworkMessage.MessageType.AuthTimeout,
@@ -135,8 +135,8 @@ namespace SemesterProject.Kortleser.CLI
 			clientSession.EnqueueNetworkData(message);
 		}
 
-        private static void Controller_AuthFailure(object sender, AuthControllerEventArgs e)
-        {
+		private static void Controller_AuthFailure(object sender, AuthControllerEventArgs e)
+		{
 			var message = new NetworkMessage()
 			{
 				Type = NetworkMessage.MessageType.AuthFailure,
@@ -149,8 +149,8 @@ namespace SemesterProject.Kortleser.CLI
 			clientSession.EnqueueNetworkData(message);
 		}
 
-        private static void Controller_AuthSuccess(object sender, AuthControllerEventArgs e)
-        {
+		private static void Controller_AuthSuccess(object sender, AuthControllerEventArgs e)
+		{
 			var message = new NetworkMessage()
 			{
 				Type = NetworkMessage.MessageType.AuthSuccess,
@@ -163,8 +163,8 @@ namespace SemesterProject.Kortleser.CLI
 			clientSession.EnqueueNetworkData(message);
 		}
 
-        private static void Controller_KeypadPress(object sender, AuthControllerEventArgs e)
-        {
+		private static void Controller_KeypadPress(object sender, AuthControllerEventArgs e)
+		{
 			var message = new NetworkMessage()
 			{
 				Type = NetworkMessage.MessageType.KeypadPress,
@@ -177,8 +177,8 @@ namespace SemesterProject.Kortleser.CLI
 			clientSession.EnqueueNetworkData(message);
 		}
 
-        private static void Controller_Closed(object sender, AuthControllerEventArgs e)
-        {
+		private static void Controller_Closed(object sender, AuthControllerEventArgs e)
+		{
 			var message = new NetworkMessage()
 			{
 				Type = NetworkMessage.MessageType.Closed,
@@ -191,8 +191,8 @@ namespace SemesterProject.Kortleser.CLI
 			clientSession.EnqueueNetworkData(message);
 		}
 
-        private static void Controller_RequestAccessTable(object sender, AuthControllerEventArgs e)
-        {
+		private static void Controller_RequestAccessTable(object sender, AuthControllerEventArgs e)
+		{
 			var message = new NetworkMessage()
 			{
 				Type = NetworkMessage.MessageType.RequestAccessTable,
@@ -203,19 +203,19 @@ namespace SemesterProject.Kortleser.CLI
 			};
 
 			clientSession.EnqueueNetworkData(message);
-        }
+		}
 
-        private static void ClientSession_UpdateAccessTable(object sender, NetworkMessage e)
-        {
+		private static void ClientSession_UpdateAccessTable(object sender, NetworkMessage e)
+		{
 			if (e.MessageObject is SortedSet<UserPermission>)
 				controller.AuthTable = e.MessageObject as SortedSet<UserPermission>;
-        }
+		}
 
-        private static void ClientSession_UpdateNodeClock(object sender, NetworkMessage e)
-        {
-            var commands = SerialCommand.SetDateTime(e.UnitTimestamp);
+		private static void ClientSession_UpdateNodeClock(object sender, NetworkMessage e)
+		{
+			var commands = SerialCommand.SetDateTime(e.UnitTimestamp);
 			foreach (var command in commands) dataReader.EnqueueCommand(command);
-        }
+		}
 
 		private static void DataReader_StatusRecieved(object sender, SerialStatusData e)
 		{
@@ -229,7 +229,7 @@ namespace SemesterProject.Kortleser.CLI
 				Type = NetworkMessage.MessageType.Other,
 				MessageObject = null
 			};
-		
+
 			clientSession?.EnqueueNetworkData(data);
 		}
 	}

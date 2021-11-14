@@ -6,7 +6,7 @@ namespace SemesterProject.SerialCommunication
 	public struct SerialCommand
 	{
 		public enum CommandType { UnitNumber, Date, Time, UpdateRate, Output, InputAutoUpdate }
-		public enum OutputPin { P0, P1, P2 , P3 , P4 , P5 , P6, P7, All }
+		public enum OutputPin { P0, P1, P2, P3, P4, P5, P6, P7, All }
 		public CommandType Type { get; private set; }
 		public int Argument { get; private set; }
 
@@ -29,7 +29,7 @@ namespace SemesterProject.SerialCommunication
 
 		public static SerialCommand SetInputAutoUpdate(bool flag)
 		{
-			return new SerialCommand(CommandType.InputAutoUpdate, flag? 1: 0);
+			return new SerialCommand(CommandType.InputAutoUpdate, flag ? 1 : 0);
 		}
 		public static SerialCommand SetDate(DateTime dateTime)
 		{
@@ -43,7 +43,7 @@ namespace SemesterProject.SerialCommunication
 		}
 		public static SerialCommand SetOutputPin(OutputPin pin, bool val)
 		{
-			byte pinVal = val ? (byte)1: (byte)0;
+			byte pinVal = val ? (byte)1 : (byte)0;
 			byte pinAddr = 0;
 			switch (pin)
 			{
@@ -78,7 +78,7 @@ namespace SemesterProject.SerialCommunication
 					break;
 			}
 
-			return new SerialCommand(CommandType.Output,pinAddr * 10 + pinVal);
+			return new SerialCommand(CommandType.Output, pinAddr * 10 + pinVal);
 		}
 
 		public static SerialCommand[] SetOutput(byte outputRegister)
@@ -86,7 +86,7 @@ namespace SemesterProject.SerialCommunication
 			List<SerialCommand> cmdList = new List<SerialCommand>();
 			if (outputRegister == 0 || outputRegister == 0xff)
 			{
-				cmdList.Add(SetOutputPin(OutputPin.All, outputRegister != 0 ? true: false));
+				cmdList.Add(SetOutputPin(OutputPin.All, outputRegister != 0 ? true : false));
 			}
 			else
 			{

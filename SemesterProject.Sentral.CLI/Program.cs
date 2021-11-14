@@ -1,18 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Microsoft.Extensions.Configuration.UserSecrets;
+using Npgsql;
 using SemesterProject.Common.Core;
 using SemesterProject.NetworkCommunication;
-using System.Security.Cryptography;
 using Serilog;
-using System.Threading.Tasks;
-using System.Threading;
-using Npgsql;
-using Microsoft.Extensions.Configuration.UserSecrets;
+using System;
+using System.Collections.Generic;
+using System.Data;
 using System.IO;
-using System.Text;
-using System.Text.Json;
+using System.Security.Cryptography;
+using System.Threading.Tasks;
 using System.Xml.Serialization;
-using System.Text.Json.Serialization;
 
 namespace SemesterProject.Sentral.CLI
 {
@@ -34,7 +31,7 @@ namespace SemesterProject.Sentral.CLI
 				Task dbConnerctionOpen = DatabaseConnection.OpenAsync(ProgramCore.ProgramCancel.Token);
 				Log.Information("Creating server object");
 				using SocketServer socketServer = new(aes);
-				
+
 				SocketServerSession.MessageRecieved += SocketServerSession_MessageRecieved;
 				SocketServerSession.UpdateAccessTable += SocketServerSession_UpdateAccessTable;
 				SocketServerSession.KeypadPress += SocketServerSession_KeypadPress;
@@ -92,37 +89,40 @@ namespace SemesterProject.Sentral.CLI
 
 		private static async void SocketServerSession_UpdateAccessTable(object sender, NetworkMessage e)
 		{
-			var s = sender as SocketServerSession;
-			using var cmd = DatabaseConnection.CreateCommand();
-			cmd.CommandText = $"select bruker.bruker_id, bruker.kode, bruker.bruker_id in (select bruker_id from bruker inner join tilgang on tilgang.bruker_id = tilgang.bruker_id inner join kortleser on kortleser.leser_id = tilgang.leser_id where kortleser.leser_id = {e.NodeNumber};) as aksess from users;";
-			var execute = cmd.ExecuteReaderAsync();
-			SortedSet<UserPermission> authTab = new();
-
-			using (var reader = await execute)
-				while (reader.Read())
-					authTab.Add(new UserPermission()
-					{
-						UserId = reader.GetInt32(0),
-						PassCode = reader.GetInt32(1),
-						IsAllowed = reader.GetBoolean(2)
-					});
-
-			DateTime current = DateTime.Now;
-			s.EnqueueNetworkData(new NetworkMessage()
+			if (DatabaseConnection.State == ConnectionState.Open)
 			{
-				MessageObject = authTab,
-				MessageTimestamp = current,
-				NodeNumber = 0,
-				UnitTimestamp = current,
-				Type = NetworkMessage.MessageType.UpdateAccessTable
-			});
+				var s = sender as SocketServerSession;
+				using var cmd = DatabaseConnection.CreateCommand();
+				cmd.CommandText = $"select bruker.bruker_id, bruker.kort_id, bruker.kort_pin, bruker.bruker_id in (select bruker_id from bruker inner join tilgang on tilgang.bruker_id = bruker.bruker_id inner join kortleser on kortleser.sone_id = tilgang.sone_id where kortleser.leser_id = {e.NodeNumber} and (bruker.kort_gyldig_start <= current_date and not bruker.kort_gyldig_stop < current_date );) as aksess from bruker;";
+				var execute = cmd.ExecuteReaderAsync();
+				SortedSet<UserPermission> authTab = new();
 
+				using (var reader = await execute)
+					while (reader.Read())
+						authTab.Add(new UserPermission()
+						{
+							UserId = reader.GetInt32(0),
+							CardId = reader.GetInt32(1),
+							CardCode = reader.GetInt32(2),
+							IsAllowed = reader.GetBoolean(3)
+						});
+
+				DateTime current = DateTime.Now;
+				s.EnqueueNetworkData(new NetworkMessage()
+				{
+					MessageObject = authTab,
+					MessageTimestamp = current,
+					NodeNumber = 0,
+					UnitTimestamp = current,
+					Type = NetworkMessage.MessageType.UpdateAccessTable
+				});
+			}
 		}
 
 		static NpgsqlConnection GetDbConnection()
 		{
 			string dbSecrets = Path.Combine(Path.GetDirectoryName(PathHelper.GetSecretsPathFromSecretsId("2582243a-5592-4d35-96c1-e622e5f09a1a")), "dbSecrets.xml"); // XML
-			//string dbSecrets = PathHelper.GetSecretsPathFromSecretsId("2582243a-5592-4d35-96c1-e622e5f09a1a"); //JSON
+																																									 //string dbSecrets = PathHelper.GetSecretsPathFromSecretsId("2582243a-5592-4d35-96c1-e622e5f09a1a"); //JSON
 
 			DbSettings settings = null;
 
@@ -148,7 +148,7 @@ namespace SemesterProject.Sentral.CLI
 					//secretsWriter.WriteLine(secretContent);
 					Log.Information("Secrets file created");
 				}
-				catch(Exception ex)
+				catch (Exception ex)
 				{
 					Log.Error(ex, "Secrets creation failed");
 				}
@@ -167,7 +167,7 @@ namespace SemesterProject.Sentral.CLI
 					{
 						throw new NullReferenceException();
 					}
-					
+
 				}
 				catch (Exception ex)
 				{

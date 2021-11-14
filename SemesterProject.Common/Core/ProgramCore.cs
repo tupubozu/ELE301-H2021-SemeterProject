@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Serilog;
-using System.Threading.Tasks;
+﻿using Serilog;
+using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace SemesterProject.Common.Core
 {
@@ -12,7 +10,7 @@ namespace SemesterProject.Common.Core
 		public static CancellationTokenSource ProgramCancel = new CancellationTokenSource();
 
 		private static bool programStopFlag = false;
-		private static object syncObject =  new object();
+		private static object syncObject = new object();
 		public static void SetupLoging()
 		{
 			Log.Logger = new LoggerConfiguration()

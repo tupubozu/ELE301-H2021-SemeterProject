@@ -1,12 +1,12 @@
-﻿using System;
+﻿using Microsoft.Extensions.Configuration.UserSecrets;
+using Serilog;
+using System;
 using System.IO;
 using System.Security.Cryptography;
 using System.Xml.Serialization;
-using Microsoft.Extensions.Configuration.UserSecrets;
-using Serilog;
 
 namespace SemesterProject.Common.Core
-{ 
+{
 	[Serializable]
 	public class AesSecret
 	{
