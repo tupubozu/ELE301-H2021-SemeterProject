@@ -22,7 +22,7 @@ namespace SemesterProject.Sentral.CLI
 			ProgramCore.SetupLoging();
 
 			Log.Information("Starting program");
-			Console.WriteLine("SENTRAL v0.0.1\n\tSemestergruppe 13");
+			Console.WriteLine("SENTRAL v1.0.0-RC1\n\tSemestergruppe 13");
 
 			Console.CancelKeyPress += ProgramCore.Console_CancelKeyPress;
 			{

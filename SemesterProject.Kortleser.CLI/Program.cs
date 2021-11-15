@@ -20,7 +20,7 @@ namespace SemesterProject.Kortleser.CLI
 			ProgramCore.SetupLoging();
 
 			Log.Information("Starting program");
-			Console.WriteLine("KORTLESER v0.0.1\n\tSemestergruppe 13");
+			Console.WriteLine("KORTLESER v1.0.0-RC1\n\tSemestergruppe 13");
 
 			var ports = SerialPort.GetPortNames();
 			int portIndex = 0;
