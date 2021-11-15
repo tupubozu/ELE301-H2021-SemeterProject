@@ -16,6 +16,7 @@ namespace SemesterProject.Sentral.CLI
 	class Program
 	{
 		static NpgsqlConnection DatabaseConnection;
+		static Task dbConnector;
 		static async Task Main(string[] args)
 		{
 			ProgramCore.SetupLoging();
@@ -28,7 +29,9 @@ namespace SemesterProject.Sentral.CLI
 				using Aes aes = AesSecret.GetAes();
 
 				DatabaseConnection = GetDbConnection();
-				Task dbConnerctionOpen = DatabaseConnection.OpenAsync(ProgramCore.ProgramCancel.Token);
+
+				dbConnector = GetDbConnectorTask();
+				
 				Log.Information("Creating server object");
 				using SocketServer socketServer = new(aes);
 
@@ -41,7 +44,7 @@ namespace SemesterProject.Sentral.CLI
 				SocketServerSession.Breach += SocketServerSession_Breach;
 				SocketServerSession.OtherMessage += SocketServerSession_OtherMessage;
 
-				await dbConnerctionOpen;
+				
 
 				await ProgramCore.CheckStopFlag();
 			}
@@ -52,6 +55,31 @@ namespace SemesterProject.Sentral.CLI
 #endif
 		}
 
+		private static Task GetDbConnectorTask()
+		{
+			return Task.Run(async () =>
+			{
+				Log.Information("Attempting to connect to database");
+			Retry:
+				if (ProgramCore.ProgramCancel.IsCancellationRequested) return;
+				try
+				{
+					Task dbConnerctionOpen = DatabaseConnection.OpenAsync(ProgramCore.ProgramCancel.Token);
+					await dbConnerctionOpen;
+				}
+				catch (Exception ex)
+				{
+					Log.Debug(ex, "Database connection failed");
+					Log.Information("Database connection failed. Retrying in 2 seconds");
+					await Task.Delay(2000);
+					goto Retry;
+				}
+
+				Log.Information("Database connection established");
+
+			}, ProgramCore.ProgramCancel.Token);
+		}
+
 		private static void SocketServerSession_MessageRecieved(object sender, NetworkMessage e)
 		{
 			Log.Information("Network message recieved from node {0} ({2}): {1}", e.NodeNumber, e.Type, sender);
@@ -59,32 +87,80 @@ namespace SemesterProject.Sentral.CLI
 
 		private static void SocketServerSession_OtherMessage(object sender, NetworkMessage e)
 		{
-			throw new NotImplementedException();
+			if (DatabaseConnection.State == ConnectionState.Open)
+			{
+				var s = sender as SocketServerSession;
+				using var cmd = DatabaseConnection.CreateCommand();
+				cmd.CommandText = $"insert into Logg (LoggType_ID, Leser_ID, LeserTid, MeldingTid, SentralTid, LoggMelding) values (0,{e.NodeNumber},\'{e.UnitTimestamp}\',\'{e.MessageTimestamp}\',\'{DateTime.Now.ToString("O")}\',\'{e.MessageObject as string}\');";
+				var execute = cmd.ExecuteNonQuery();
+			}
+			else if (dbConnector.IsCompleted)
+				dbConnector = GetDbConnectorTask(); 
 		}
 
 		private static void SocketServerSession_Breach(object sender, NetworkMessage e)
 		{
-			throw new NotImplementedException();
+			if (DatabaseConnection.State == ConnectionState.Open)
+			{
+				var s = sender as SocketServerSession;
+				using var cmd = DatabaseConnection.CreateCommand();
+				cmd.CommandText = $"insert into Logg (LoggType_ID, Leser_ID, LeserTid, MeldingTid, SentralTid) values (6,{e.NodeNumber},\'{e.UnitTimestamp}\',\'{e.MessageTimestamp}\',\'{DateTime.Now.ToString("O")}\');";
+				var execute = cmd.ExecuteNonQuery();
+			}
+			else if (dbConnector.IsCompleted)
+				dbConnector = GetDbConnectorTask();
 		}
 
 		private static void SocketServerSession_AuthSuccess(object sender, NetworkMessage e)
 		{
-			throw new NotImplementedException();
+			if (DatabaseConnection.State == ConnectionState.Open)
+			{
+				var s = sender as SocketServerSession;
+				using var cmd = DatabaseConnection.CreateCommand();
+				cmd.CommandText = $"insert into Logg (LoggType_ID, Leser_ID, LeserTid, MeldingTid, SentralTid) values (3,{e.NodeNumber},\'{e.UnitTimestamp}\',\'{e.MessageTimestamp}\',\'{DateTime.Now.ToString("O")}\');";
+				var execute = cmd.ExecuteNonQuery();
+			}
+			else if (dbConnector.IsCompleted)
+				dbConnector = GetDbConnectorTask();
 		}
 
 		private static void SocketServerSession_AuthTimeout(object sender, NetworkMessage e)
 		{
-			throw new NotImplementedException();
+			if (DatabaseConnection.State == ConnectionState.Open)
+			{
+				var s = sender as SocketServerSession;
+				using var cmd = DatabaseConnection.CreateCommand();
+				cmd.CommandText = $"insert into Logg (LoggType_ID, Leser_ID, LeserTid, MeldingTid, SentralTid) values (4,{e.NodeNumber},\'{e.UnitTimestamp}\',\'{e.MessageTimestamp}\',\'{DateTime.Now.ToString("O")}\');";
+				var execute = cmd.ExecuteNonQuery();
+			}
+			else if (dbConnector.IsCompleted)
+				dbConnector = GetDbConnectorTask();
 		}
 
 		private static void SocketServerSession_AuthFailure(object sender, NetworkMessage e)
 		{
-			throw new NotImplementedException();
+			if (DatabaseConnection.State == ConnectionState.Open)
+			{
+				var s = sender as SocketServerSession;
+				using var cmd = DatabaseConnection.CreateCommand();
+				cmd.CommandText = $"insert into Logg (LoggType_ID, Leser_ID, LeserTid, MeldingTid, SentralTid) values (5,{e.NodeNumber},\'{e.UnitTimestamp}\',\'{e.MessageTimestamp}\',\'{DateTime.Now.ToString("O")}\');";
+				var execute = cmd.ExecuteNonQuery();
+			}
+			else if (dbConnector.IsCompleted)
+				dbConnector = GetDbConnectorTask();
 		}
 
 		private static void SocketServerSession_KeypadPress(object sender, NetworkMessage e)
 		{
-			throw new NotImplementedException();
+			if (DatabaseConnection.State == ConnectionState.Open)
+			{
+				var s = sender as SocketServerSession;
+				using var cmd = DatabaseConnection.CreateCommand();
+				cmd.CommandText = $"insert into Logg (LoggType_ID, Leser_ID, LeserTid, MeldingTid, SentralTid) values (1,{e.NodeNumber},\'{e.UnitTimestamp}\',\'{e.MessageTimestamp}\',\'{DateTime.Now.ToString("O")}\');";
+				var execute = cmd.ExecuteNonQuery();
+			}
+			else if (dbConnector.IsCompleted)
+				dbConnector = GetDbConnectorTask();
 		}
 
 		private static async void SocketServerSession_UpdateAccessTable(object sender, NetworkMessage e)
@@ -117,12 +193,14 @@ namespace SemesterProject.Sentral.CLI
 					Type = NetworkMessage.MessageType.UpdateAccessTable
 				});
 			}
+			else if (dbConnector.IsCompleted)
+				dbConnector = GetDbConnectorTask();
 		}
 
 		static NpgsqlConnection GetDbConnection()
 		{
 			string dbSecrets = Path.Combine(Path.GetDirectoryName(PathHelper.GetSecretsPathFromSecretsId("2582243a-5592-4d35-96c1-e622e5f09a1a")), "dbSecrets.xml"); // XML
-																																									 //string dbSecrets = PathHelper.GetSecretsPathFromSecretsId("2582243a-5592-4d35-96c1-e622e5f09a1a"); //JSON
+			//string dbSecrets = PathHelper.GetSecretsPathFromSecretsId("2582243a-5592-4d35-96c1-e622e5f09a1a"); //JSON
 
 			DbSettings settings = null;
 
