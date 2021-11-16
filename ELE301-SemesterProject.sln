@@ -17,9 +17,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SemesterProject.Sentral.CLI
 		{13D26D3C-6670-4C7E-8803-89B830AFEE1D} = {13D26D3C-6670-4C7E-8803-89B830AFEE1D}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SemesterProject.Monitor.GUI", "SemesterProject.Monitor.GUI\SemesterProject.Monitor.GUI.csproj", "{A06FBE4F-AA20-4C4F-BBA0-5AE185A3EDBD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SemesterProject.Monitor.GUI", "src\SemesterProject.Monitor.GUI\SemesterProject.Monitor.GUI.csproj", "{A06FBE4F-AA20-4C4F-BBA0-5AE185A3EDBD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SemesterProject.SentralAdmin.GUI", "SemesterProject.SentralAdmin.GUI\SemesterProject.SentralAdmin.GUI.csproj", "{95198A16-7B66-4FAF-B8E4-2E0014B0C98C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SemesterProject.SentralAdmin.GUI", "src\SemesterProject.SentralAdmin.GUI\SemesterProject.SentralAdmin.GUI.csproj", "{95198A16-7B66-4FAF-B8E4-2E0014B0C98C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
