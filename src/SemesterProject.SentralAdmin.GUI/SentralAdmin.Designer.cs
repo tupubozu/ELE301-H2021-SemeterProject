@@ -41,6 +41,10 @@
             this.btnAddReader = new System.Windows.Forms.Button();
             this.listReaders = new System.Windows.Forms.ListBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.labelCardPin = new System.Windows.Forms.Label();
+            this.labelCardID = new System.Windows.Forms.Label();
+            this.txtCardPin = new System.Windows.Forms.TextBox();
+            this.txtCardID = new System.Windows.Forms.TextBox();
             this.labelStopTime = new System.Windows.Forms.Label();
             this.labelStartTime = new System.Windows.Forms.Label();
             this.StopTimePicker = new System.Windows.Forms.DateTimePicker();
@@ -102,7 +106,7 @@
             this.groupBox1.Controls.Add(this.btnRemoveReader);
             this.groupBox1.Controls.Add(this.btnAddReader);
             this.groupBox1.Controls.Add(this.listReaders);
-            this.groupBox1.Location = new System.Drawing.Point(12, 316);
+            this.groupBox1.Location = new System.Drawing.Point(12, 366);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(810, 233);
             this.groupBox1.TabIndex = 19;
@@ -142,6 +146,7 @@
             // 
             this.txtPlacement.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.txtPlacement.Location = new System.Drawing.Point(369, 57);
+            this.txtPlacement.MaxLength = 128;
             this.txtPlacement.Name = "txtPlacement";
             this.txtPlacement.Size = new System.Drawing.Size(435, 23);
             this.txtPlacement.TabIndex = 24;
@@ -152,6 +157,7 @@
             this.txtReaderID.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.txtReaderID.Location = new System.Drawing.Point(6, 204);
+            this.txtReaderID.MaxLength = 4;
             this.txtReaderID.Name = "txtReaderID";
             this.txtReaderID.Size = new System.Drawing.Size(117, 23);
             this.txtReaderID.TabIndex = 22;
@@ -195,6 +201,10 @@
             this.groupBox2.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox2.Controls.Add(this.labelCardPin);
+            this.groupBox2.Controls.Add(this.labelCardID);
+            this.groupBox2.Controls.Add(this.txtCardPin);
+            this.groupBox2.Controls.Add(this.txtCardID);
             this.groupBox2.Controls.Add(this.labelStopTime);
             this.groupBox2.Controls.Add(this.labelStartTime);
             this.groupBox2.Controls.Add(this.StopTimePicker);
@@ -216,16 +226,56 @@
             this.groupBox2.Controls.Add(this.listUsers);
             this.groupBox2.Location = new System.Drawing.Point(12, 27);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(810, 283);
+            this.groupBox2.Size = new System.Drawing.Size(810, 333);
             this.groupBox2.TabIndex = 27;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Brukere";
+            // 
+            // labelCardPin
+            // 
+            this.labelCardPin.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.labelCardPin.AutoSize = true;
+            this.labelCardPin.Location = new System.Drawing.Point(282, 246);
+            this.labelCardPin.Name = "labelCardPin";
+            this.labelCardPin.Size = new System.Drawing.Size(50, 15);
+            this.labelCardPin.TabIndex = 35;
+            this.labelCardPin.Text = "Pinkode";
+            // 
+            // labelCardID
+            // 
+            this.labelCardID.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.labelCardID.AutoSize = true;
+            this.labelCardID.Location = new System.Drawing.Point(282, 217);
+            this.labelCardID.Name = "labelCardID";
+            this.labelCardID.Size = new System.Drawing.Size(43, 15);
+            this.labelCardID.TabIndex = 34;
+            this.labelCardID.Text = "Kort ID";
+            // 
+            // txtCardPin
+            // 
+            this.txtCardPin.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtCardPin.Location = new System.Drawing.Point(369, 243);
+            this.txtCardPin.MaxLength = 4;
+            this.txtCardPin.Name = "txtCardPin";
+            this.txtCardPin.Size = new System.Drawing.Size(187, 23);
+            this.txtCardPin.TabIndex = 33;
+            this.txtCardPin.Leave += new System.EventHandler(this.txtCardPin_Leave);
+            // 
+            // txtCardID
+            // 
+            this.txtCardID.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtCardID.Location = new System.Drawing.Point(369, 214);
+            this.txtCardID.MaxLength = 4;
+            this.txtCardID.Name = "txtCardID";
+            this.txtCardID.Size = new System.Drawing.Size(187, 23);
+            this.txtCardID.TabIndex = 32;
+            this.txtCardID.Leave += new System.EventHandler(this.txtCardID_Leave);
             // 
             // labelStopTime
             // 
             this.labelStopTime.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.labelStopTime.AutoSize = true;
-            this.labelStopTime.Location = new System.Drawing.Point(282, 257);
+            this.labelStopTime.Location = new System.Drawing.Point(282, 307);
             this.labelStopTime.Name = "labelStopTime";
             this.labelStopTime.Size = new System.Drawing.Size(62, 15);
             this.labelStopTime.TabIndex = 31;
@@ -235,7 +285,7 @@
             // 
             this.labelStartTime.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.labelStartTime.AutoSize = true;
-            this.labelStartTime.Location = new System.Drawing.Point(282, 228);
+            this.labelStartTime.Location = new System.Drawing.Point(282, 278);
             this.labelStartTime.Name = "labelStartTime";
             this.labelStartTime.Size = new System.Drawing.Size(55, 15);
             this.labelStartTime.TabIndex = 30;
@@ -244,18 +294,20 @@
             // StopTimePicker
             // 
             this.StopTimePicker.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.StopTimePicker.Location = new System.Drawing.Point(369, 251);
+            this.StopTimePicker.Location = new System.Drawing.Point(369, 301);
             this.StopTimePicker.Name = "StopTimePicker";
             this.StopTimePicker.Size = new System.Drawing.Size(187, 23);
             this.StopTimePicker.TabIndex = 29;
+            this.StopTimePicker.Leave += new System.EventHandler(this.StopTimePicker_Leave);
             // 
             // StartTimePicker
             // 
             this.StartTimePicker.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.StartTimePicker.Location = new System.Drawing.Point(369, 222);
+            this.StartTimePicker.Location = new System.Drawing.Point(369, 272);
             this.StartTimePicker.Name = "StartTimePicker";
             this.StartTimePicker.Size = new System.Drawing.Size(187, 23);
             this.StartTimePicker.TabIndex = 28;
+            this.StartTimePicker.Leave += new System.EventHandler(this.StartTimePicker_Leave);
             // 
             // labelSoneSelect
             // 
@@ -306,14 +358,15 @@
             this.listSones.ItemHeight = 15;
             this.listSones.Location = new System.Drawing.Point(562, 109);
             this.listSones.Name = "listSones";
-            this.listSones.Size = new System.Drawing.Size(242, 154);
+            this.listSones.Size = new System.Drawing.Size(242, 214);
             this.listSones.TabIndex = 21;
             // 
             // txtUserID
             // 
             this.txtUserID.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtUserID.Location = new System.Drawing.Point(6, 254);
+            this.txtUserID.Location = new System.Drawing.Point(6, 304);
+            this.txtUserID.MaxLength = 4;
             this.txtUserID.Name = "txtUserID";
             this.txtUserID.Size = new System.Drawing.Size(117, 23);
             this.txtUserID.TabIndex = 20;
@@ -351,7 +404,7 @@
             // btnRemoveUser
             // 
             this.btnRemoveUser.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnRemoveUser.Location = new System.Drawing.Point(205, 253);
+            this.btnRemoveUser.Location = new System.Drawing.Point(205, 303);
             this.btnRemoveUser.Name = "btnRemoveUser";
             this.btnRemoveUser.Size = new System.Drawing.Size(71, 23);
             this.btnRemoveUser.TabIndex = 16;
@@ -362,7 +415,7 @@
             // btnAddUser
             // 
             this.btnAddUser.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnAddUser.Location = new System.Drawing.Point(129, 253);
+            this.btnAddUser.Location = new System.Drawing.Point(129, 303);
             this.btnAddUser.Name = "btnAddUser";
             this.btnAddUser.Size = new System.Drawing.Size(70, 23);
             this.btnAddUser.TabIndex = 15;
@@ -374,6 +427,7 @@
             // 
             this.txtEmail.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.txtEmail.Location = new System.Drawing.Point(369, 80);
+            this.txtEmail.MaxLength = 64;
             this.txtEmail.Name = "txtEmail";
             this.txtEmail.Size = new System.Drawing.Size(435, 23);
             this.txtEmail.TabIndex = 14;
@@ -383,6 +437,7 @@
             // 
             this.txtLastName.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.txtLastName.Location = new System.Drawing.Point(369, 51);
+            this.txtLastName.MaxLength = 32;
             this.txtLastName.Name = "txtLastName";
             this.txtLastName.Size = new System.Drawing.Size(435, 23);
             this.txtLastName.TabIndex = 13;
@@ -392,6 +447,7 @@
             // 
             this.txtFirstName.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.txtFirstName.Location = new System.Drawing.Point(369, 22);
+            this.txtFirstName.MaxLength = 32;
             this.txtFirstName.Name = "txtFirstName";
             this.txtFirstName.Size = new System.Drawing.Size(435, 23);
             this.txtFirstName.TabIndex = 12;
@@ -406,7 +462,7 @@
             this.listUsers.ItemHeight = 15;
             this.listUsers.Location = new System.Drawing.Point(6, 22);
             this.listUsers.Name = "listUsers";
-            this.listUsers.Size = new System.Drawing.Size(270, 214);
+            this.listUsers.Size = new System.Drawing.Size(270, 274);
             this.listUsers.TabIndex = 11;
             this.listUsers.SelectedValueChanged += new System.EventHandler(this.listUsers_SelectedValueChanged);
             // 
@@ -414,12 +470,12 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(834, 561);
+            this.ClientSize = new System.Drawing.Size(834, 611);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.menuStrip1);
             this.MainMenuStrip = this.menuStrip1;
-            this.MinimumSize = new System.Drawing.Size(850, 600);
+            this.MinimumSize = new System.Drawing.Size(850, 650);
             this.Name = "SentralAdmin";
             this.Text = "SentralAdmin";
             this.menuStrip1.ResumeLayout(false);
@@ -467,5 +523,9 @@
         private Label labelStartTime;
         private DateTimePicker StopTimePicker;
         private DateTimePicker StartTimePicker;
+        private Label labelCardPin;
+        private Label labelCardID;
+        private TextBox txtCardPin;
+        private TextBox txtCardID;
     }
 }

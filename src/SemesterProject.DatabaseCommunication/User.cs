@@ -4,7 +4,7 @@ using System.Text;
 
 namespace SemesterProject.DatabaseCommunication
 {
-    public class User
+    public class User: IComparable<User>
     {
         public int ID;
         public string FirstName;
@@ -14,6 +14,11 @@ namespace SemesterProject.DatabaseCommunication
         public int? CardPin;
         public DateTime CardValidStart;
         public DateTime? CardValidEnd;
+
+        public int CompareTo(User other)
+        {
+            return this.ID.CompareTo(other.ID);
+        }
 
         public override string ToString()
         {

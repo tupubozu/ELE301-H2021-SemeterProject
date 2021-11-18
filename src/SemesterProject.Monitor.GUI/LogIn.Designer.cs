@@ -154,6 +154,7 @@
             this.txtPort.Name = "txtPort";
             this.txtPort.Size = new System.Drawing.Size(100, 23);
             this.txtPort.TabIndex = 10;
+            this.txtPort.Text = "5432";
             // 
             // LogIn
             // 
