@@ -33,6 +33,14 @@ namespace SemesterProject.Kortleser.CLI
 		private uint keySequence = 0;
 
 		private bool keyPressed = false;
+
+		private SerialCommunicator serialCom;
+
+		public AuthStateController(SerialCommunicator communicator)
+        {
+			serialCom = communicator;
+        }
+
 		public void Update(SerialStatusData data)
 		{
 			currentTime = DateTime.Now;
@@ -141,6 +149,8 @@ namespace SemesterProject.Kortleser.CLI
 					AuthTimeout?.Invoke(this, e);
 					break;
 				case (_, State.Closed):
+					serialCom.EnqueueCommand(SerialCommand.SetOutputPin(SerialCommand.OutputPin.All,false));
+					serialCom.EnqueueCommand(SerialCommand.SetOutputPin(SerialCommand.OutputPin.P5, true));
 					Closed?.Invoke(this, e);
 					break;
 				case (_, State.Unauthorized):
@@ -148,10 +158,12 @@ namespace SemesterProject.Kortleser.CLI
 					AuthFailure?.Invoke(this, e);
 					break;
 				case (_, State.Authorized):
+					serialCom.EnqueueCommand(SerialCommand.SetOutputPin(SerialCommand.OutputPin.P5,false));
 					e.Permission = AuthTable.Where((UserPermission u) => u.CardId == (keySequence / 10000) && u.CardCode == (keySequence % 10000))?.First();
 					AuthSuccess?.Invoke(this, e);
 					break;
 				case (_, State.Breached):
+					serialCom.EnqueueCommand(SerialCommand.SetOutputPin(SerialCommand.OutputPin.P7, true));
 					Breached?.Invoke(this, e);
 					break;
 			}

@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\SemesterProject.DatabaseCommunication\SemesterProject.DatabaseCommunication.csproj" />
     <ProjectReference Include="..\SemesterProject.Monitor.GUI\SemesterProject.Monitor.GUI.csproj" />
   </ItemGroup>
 

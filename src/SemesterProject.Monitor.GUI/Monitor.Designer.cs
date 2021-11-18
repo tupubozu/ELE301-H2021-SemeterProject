@@ -36,6 +36,7 @@
             this.brukerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.brukerToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.dørToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.alarmToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.listView1 = new System.Windows.Forms.ListView();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.menuStrip1.SuspendLayout();
@@ -63,7 +64,7 @@
             // loggInnToolStripMenuItem
             // 
             this.loggInnToolStripMenuItem.Name = "loggInnToolStripMenuItem";
-            this.loggInnToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.loggInnToolStripMenuItem.Size = new System.Drawing.Size(121, 22);
             this.loggInnToolStripMenuItem.Text = "Logg inn";
             this.loggInnToolStripMenuItem.Click += new System.EventHandler(this.loggInnToolStripMenuItem_Click);
             // 
@@ -72,28 +73,39 @@
             this.rapportToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.brukerToolStripMenuItem,
             this.brukerToolStripMenuItem1,
-            this.dørToolStripMenuItem});
+            this.dørToolStripMenuItem,
+            this.alarmToolStripMenuItem});
             this.rapportToolStripMenuItem.Name = "rapportToolStripMenuItem";
-            this.rapportToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.rapportToolStripMenuItem.Size = new System.Drawing.Size(121, 22);
             this.rapportToolStripMenuItem.Text = "Rapport";
             // 
             // brukerToolStripMenuItem
             // 
             this.brukerToolStripMenuItem.Name = "brukerToolStripMenuItem";
-            this.brukerToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.brukerToolStripMenuItem.Size = new System.Drawing.Size(162, 22);
             this.brukerToolStripMenuItem.Text = "Adgangslogg";
+            this.brukerToolStripMenuItem.Click += new System.EventHandler(this.adgangToolStripMenuItem_Click);
             // 
             // brukerToolStripMenuItem1
             // 
             this.brukerToolStripMenuItem1.Name = "brukerToolStripMenuItem1";
-            this.brukerToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
+            this.brukerToolStripMenuItem1.Size = new System.Drawing.Size(162, 22);
             this.brukerToolStripMenuItem1.Text = "Bruker";
+            this.brukerToolStripMenuItem1.Click += new System.EventHandler(this.brukerToolStripMenuItem_Click);
             // 
             // dørToolStripMenuItem
             // 
             this.dørToolStripMenuItem.Name = "dørToolStripMenuItem";
-            this.dørToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.dørToolStripMenuItem.Text = "Dør";
+            this.dørToolStripMenuItem.Size = new System.Drawing.Size(162, 22);
+            this.dørToolStripMenuItem.Text = "Passeringsforsøk";
+            this.dørToolStripMenuItem.Click += new System.EventHandler(this.dørToolStripMenuItem_Click);
+            // 
+            // alarmToolStripMenuItem
+            // 
+            this.alarmToolStripMenuItem.Name = "alarmToolStripMenuItem";
+            this.alarmToolStripMenuItem.Size = new System.Drawing.Size(162, 22);
+            this.alarmToolStripMenuItem.Text = "Alarm";
+            this.alarmToolStripMenuItem.Click += new System.EventHandler(this.alarmToolStripMenuItem_Click);
             // 
             // listView1
             // 
@@ -106,6 +118,7 @@
             // 
             // timer1
             // 
+            this.timer1.Interval = 250;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
             // Monitor
@@ -136,5 +149,6 @@
         private ToolStripMenuItem dørToolStripMenuItem;
         private ListView listView1;
         private System.Windows.Forms.Timer timer1;
+        private ToolStripMenuItem alarmToolStripMenuItem;
     }
 }

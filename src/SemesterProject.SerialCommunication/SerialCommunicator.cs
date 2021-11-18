@@ -59,6 +59,11 @@ namespace SemesterProject.SerialCommunication
 			commandQueue.Enqueue(command);
 		}
 
+		public void EnqueueCommand(SerialCommand[] commands)
+		{
+			foreach (var command in commands) commandQueue.Enqueue(command);
+		}
+
 		#region Worker
 		private void InitWorker()
 		{

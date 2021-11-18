@@ -80,7 +80,7 @@ namespace SemesterProject.Kortleser.CLI
 			clientSession.UpdateAccessTable += ClientSession_UpdateAccessTable;
 			clientSession.MessageRecieved += ClientSession_MessageRecieved;
 
-			controller = new AuthStateController();
+			controller = new AuthStateController(dataReader);
 			controller.RequestAccessTable += Controller_RequestAccessTable;
 			controller.Closed += Controller_Closed;
 			controller.KeypadPress += Controller_KeypadPress;
