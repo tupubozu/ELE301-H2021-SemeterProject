@@ -15,10 +15,23 @@ namespace SemesterProject.Monitor.GUI
     public partial class LogIn : Form
     {
         IBased MainForm;
+
+        private static string serverIP = string.Empty;
+        private static int serverPort = 5432;
+        private static string database = string.Empty;
+        private static string username = string.Empty;
+        private static string password = string.Empty;
+
         public LogIn(IBased monitor)
         {
             InitializeComponent();
             MainForm = monitor;
+
+            txtIp.Text = serverIP;
+            txtPort.Text = serverPort.ToString();
+            txtDB.Text = database;
+            txtUser.Text = username;
+            txtPass.Text = password;
         }
 
         private void btnAvbryt_Click(object sender, EventArgs e)
@@ -30,12 +43,18 @@ namespace SemesterProject.Monitor.GUI
         {
             try
             {
+                serverIP = txtIp.Text;
+                serverPort = Convert.ToInt32(txtPort.Text, 10);
+                database = txtDB.Text;
+                username = txtUser.Text;
+                password = txtPass.Text;
+
                 NpgsqlConnectionStringBuilder constrBuilder = new NpgsqlConnectionStringBuilder();
-                constrBuilder.Host = txtIp.Text;
-                constrBuilder.Port = Convert.ToInt32(txtPort.Text, 10);
-                constrBuilder.Database = txtDB.Text;
-                constrBuilder.Username = txtUser.Text;
-                constrBuilder.Password = txtPass.Text;
+                constrBuilder.Host = serverIP;
+                constrBuilder.Port = serverPort;
+                constrBuilder.Database = database;
+                constrBuilder.Username = username;
+                constrBuilder.Password = password;
 
                 MainForm.Database = new NpgsqlConnection(constrBuilder.ConnectionString);
 
