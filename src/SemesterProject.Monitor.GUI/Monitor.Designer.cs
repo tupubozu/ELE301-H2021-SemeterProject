@@ -1,4 +1,14 @@
-﻿namespace SemesterProject.Monitor.GUI
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace SemesterProject.Monitor.GUI
 {
     partial class Monitor
     {

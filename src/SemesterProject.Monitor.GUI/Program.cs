@@ -1,3 +1,13 @@
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
 namespace SemesterProject.Monitor.GUI
 {
     internal static class Program
@@ -8,7 +18,9 @@ namespace SemesterProject.Monitor.GUI
         [STAThread]
         static void Main()
         {
-            ApplicationConfiguration.Initialize();
+            Application.SetHighDpiMode(HighDpiMode.SystemAware);
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Monitor());
         }
     }
