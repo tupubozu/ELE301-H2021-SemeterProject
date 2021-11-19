@@ -169,7 +169,7 @@ namespace SemesterProject.Sentral.CLI
 			{
 				var s = sender as SocketServerSession;
 				using var cmd = DatabaseConnection.CreateCommand();
-				cmd.CommandText = $"select bruker.bruker_id, bruker.kort_id, bruker.kort_pin, bruker.bruker_id in (select bruker_id from bruker inner join tilgang on tilgang.bruker_id = bruker.bruker_id inner join kortleser on kortleser.sone_id = tilgang.sone_id where kortleser.leser_id = {e.NodeNumber} and (bruker.kort_gyldig_start <= current_date and not bruker.kort_gyldig_stop < current_date );) as aksess from bruker;";
+				cmd.CommandText = $"select bruker.bruker_id, bruker.kort_id, bruker.kort_pin, bruker.bruker_id in (select bruker_id from bruker inner join tilgang on tilgang.bruker_id = bruker.bruker_id inner join kortleser on kortleser.sone_id = tilgang.sone_id where kortleser.leser_id = {e.NodeNumber} and (bruker.kort_gyldig_start <= current_date and (current_date <= bruker.kort_gyldig_stop or bruker.kort_gyldig_stop is null));) as aksess from bruker;";
 				var execute = cmd.ExecuteReaderAsync();
 				SortedSet<UserPermission> authTab = new();
 
